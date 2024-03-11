@@ -5,7 +5,7 @@ import TheMigration from "../components/TheMigration.vue"
 </script>
 
 <template>
-  <n-flex vertical>
+  <n-flex vertical style="flex: 1">
     <TheControls />
     <TheMigration />
   </n-flex>
