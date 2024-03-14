@@ -1,13 +1,14 @@
 <script setup>
-import { onMounted, ref, computed, watch } from "vue"
-import { NFlex, NSpin } from "naive-ui"
 import * as d3 from "d3"
-import { useScreenSizeStore } from "../stores/screenSize.js"
+import { NFlex, NSpin } from "naive-ui"
+import { onMounted, ref, computed, watch } from "vue"
 import { debounce } from "../utils/debounce.js"
+import { useScreenSizeStore } from "../stores/screenSize.js"
 
 const screenSize = useScreenSizeStore()
-const mapAreaHeight = computed(() => screenSize.height * 0.8)
 
+// Handle data loading, map creation, and animation ///////////////////////
+///////////////////////////////////////////////////////////////////////////
 const isLoading = ref(true)
 
 onMounted(() => {
@@ -24,6 +25,18 @@ async function createMigration() {
   console.log(migration.value)
 }
 
+// Handle screen resizing
+watch(
+  () => screenSize.width,
+  () => {
+    debouncedRecreate()
+  }
+)
+
+const debouncedRecreate = debounce(() => {
+  recreateMigration()
+}, 500)
+
 async function recreateMigration() {
   d3.select("#svg-chart").remove()
   isLoading.value = true
@@ -32,19 +45,10 @@ async function recreateMigration() {
   isLoading.value = false
 }
 
-const debouncedRecreate = debounce(() => {
-  recreateMigration()
-}, 500)
-
-watch(
-  () => screenSize.width,
-  () => {
-    debouncedRecreate()
-  }
-)
-
 // Load the maps //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
+const mapAreaHeight = computed(() => screenSize.height * 0.8)
+
 const baselMap = ref(null)
 const baselMapTranslation = ref({ x: 0, y: 0 })
 const baselCentroids = ref(null)
@@ -83,7 +87,6 @@ async function loadMapData(mapFile) {
 
 // Load the migration data ////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-
 const migration = ref(null)
 
 async function loadMigrationData() {
@@ -119,7 +122,7 @@ async function initiateSvg() {
     .attr("transform", `translate(0, 0)`)
 }
 
-// Draw the maps //////////////////////////////////////////////////////////
+// Draw the maps and get the centroids ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 async function drawMaps() {
   await drawBasel()
@@ -146,7 +149,7 @@ async function drawBasel() {
 
   const path = d3.geoPath().projection(projection)
 
-  // Basel centroids
+  // Get Basel centroids
   baselCentroids.value = getCentroids(baselMap.value, path, "wov_name")
 
   baselCtr.value = ctr.value
@@ -174,7 +177,7 @@ async function drawSwitzerland() {
 
   const path = d3.geoPath().projection(projection)
 
-  // Switzerland centroids
+  // Get Switzerland centroids
   switzerlandCentroids.value = getCentroids(switzerlandMap.value, path, "NAME")
 
   switzerlandCtr.value = ctr.value
@@ -207,7 +210,7 @@ async function drawEurope() {
 
   const path = d3.geoPath().projection(projection)
 
-  // Europe centroids
+  // Get Europe centroids
   europeCentroids.value = getCentroids(europeMap.value, path, "name")
 
   europeCtr.value = ctr.value
@@ -244,6 +247,7 @@ async function drawWorld() {
 
   const path = d3.geoPath().projection(projection)
 
+  // Get world centroids
   worldCentroids.value = getCentroids(worldMap.value, path, "name")
 
   worldCtr.value = ctr.value
@@ -266,13 +270,18 @@ async function drawWorld() {
     .style("stroke", "white")
     .style("stroke-width", "0.5px")
 }
+
+// Draw and animate the migrations ////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
 </script>
 
 <template>
   <n-flex vertical>
     <div v-if="isLoading" style="text-align: center">
       <p>Daten werden geladen...</p>
-      <p><n-spin size="large" /></p>
+      <p><n-spin size="medium" /></p>
     </div>
     <div id="basel-migration"></div>
   </n-flex>
