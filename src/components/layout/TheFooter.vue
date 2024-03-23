@@ -6,3 +6,12 @@
     <a href="https://github.com/cyrill-martin/basel-migration" target="_blank">GitHub</a>
   </footer>
 </template>
+
+<style scoped>
+footer {
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+</style>

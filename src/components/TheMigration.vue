@@ -1,11 +1,11 @@
 <script setup>
 import * as d3 from "d3"
-import { NFlex } from "naive-ui"
+import { NFlex, NSpin } from "naive-ui"
 import { onMounted, ref, computed, watch } from "vue"
 import { debounce } from "../utils/debounce.js"
 import { useScreenSizeStore } from "../stores/screenSize.js"
 import { loadMapData } from "../utils/loadMapData.js"
-import { loadMigrationChunk } from "../utils/loadMigrationChunk.js"
+// import { loadMigrationChunk } from "../utils/loadMigrationChunk.js"
 import { getCentroids } from "../utils/getCentroids.js"
 import { stripMapName } from "../utils/stripMapName.js"
 import TheControls from "./TheControls.vue"
@@ -14,21 +14,35 @@ const screenSize = useScreenSizeStore()
 
 // Handle data loading, map creation, and animation ///////////////////////
 ///////////////////////////////////////////////////////////////////////////
-const isLoading = ref(true)
 
 onMounted(() => {
-  createMigration()
+  createMigrationViz()
 })
 
-async function createMigration() {
+async function createMigrationViz() {
   await loadMaps()
   await initiateSvg()
-  await drawMaps()
-  await loadMigrationData("2006-6")
-  isLoading.value = false
+  drawMaps()
+}
 
-  console.log(migration.value)
-  drawMigrationStart(migration.value, drawMigration)
+const migration = ref(null)
+const animationSpeed = ref(null)
+
+async function startAnimation(data, speed) {
+  animationSpeed.value = speed
+
+  await resetMigration()
+
+  migration.value = data
+  if (migration.value) {
+    await drawInitialPositions()
+    animateMigration()
+  }
+}
+
+function stopAnimation() {
+  resetMigration()
+  animationOngoing.value = false
 }
 
 // Handle screen resizing
@@ -40,17 +54,36 @@ watch(
 )
 
 const debouncedRecreate = debounce(() => {
-  recreateMigration()
-}, 500)
+  recreateMigrationViz()
+}, 200)
 
-async function recreateMigration() {
+async function recreateMigrationViz() {
   d3.select("#svg-chart").remove()
-  isLoading.value = true
   await initiateSvg()
-  await drawMaps()
-  isLoading.value = false
+  drawMaps()
+  if (migration.value) {
+    await drawInitialPositions()
+    animateMigration()
+  }
+}
 
-  drawMigrationStart(migration.value, drawMigration)
+function resetMigration() {
+  return new Promise((resolve) => {
+    d3.selectAll(".migrant")
+      .transition()
+      .duration(animationDurations.resetMigration)
+      .attr("opacity", 0)
+      .remove()
+
+    d3.selectAll(".map-region")
+      .transition()
+      .duration(animationDurations.resetMigration)
+      .style("fill", function () {
+        const currentFill = d3.select(this).style("fill")
+        return currentFill !== omittedRegionFill ? regionFill : omittedRegionFill
+      })
+      .on("end", resolve)
+  })
 }
 
 // Load the maps //////////////////////////////////////////////////////////
@@ -80,11 +113,16 @@ const mapTranslation = computed(() => {
     x: screenSize.width / 2,
     y: mapAreaHeight.value / 2 + additionalWorldMapYTranslation
   }
+  const unknown = {
+    x: screenSize.width * 0.075,
+    y: mapAreaHeight.value * 0.25
+  }
   return {
     basel,
     switzerland,
     europe,
-    world
+    world,
+    unknown
   }
 })
 
@@ -93,16 +131,6 @@ async function loadMaps() {
   switzerlandMap.value = await loadMapData("switzerland.geojson")
   europeMap.value = await loadMapData("europe.geojson")
   worldMap.value = await loadMapData("world.geojson")
-}
-
-// Load the migration data ////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////
-const migration = ref(null)
-
-async function loadMigrationData(migrationChunk) {
-  const dataChunk = await loadMigrationChunk(migrationChunk)
-
-  migration.value = dataChunk
 }
 
 // Create the SVG /////////////////////////////////////////////////////////
@@ -130,15 +158,17 @@ async function initiateSvg() {
 
 // Draw the maps and get the centroids ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-async function drawMaps() {
-  await drawBasel()
-  await drawSwitzerland()
-  await drawEurope()
-  await drawWorld()
+const mapsDrawn = ref(false)
+function drawMaps() {
+  drawBasel()
+  drawSwitzerland()
+  drawEurope()
+  drawWorld()
+  mapsDrawn.value = true
 }
 
 // Draw Basel
-async function drawBasel() {
+function drawBasel() {
   const projection = d3
     .geoMercator()
     .fitSize([screenSize.width / 2, mapAreaHeight.value / 2], baselMap.value)
@@ -170,7 +200,7 @@ async function drawBasel() {
 }
 
 // Draw Switzerland
-async function drawSwitzerland() {
+function drawSwitzerland() {
   const projection = d3
     .geoMercator()
     .fitSize([screenSize.width / 2, mapAreaHeight.value / 2], switzerlandMap.value)
@@ -204,7 +234,7 @@ async function drawSwitzerland() {
 }
 
 // Draw Europe
-async function drawEurope() {
+function drawEurope() {
   const projection = d3
     .geoNaturalEarth1()
     .fitSize([screenSize.width / 2, mapAreaHeight.value / 2], europeMap.value)
@@ -238,7 +268,7 @@ async function drawEurope() {
 }
 
 // Draw the world
-async function drawWorld() {
+function drawWorld() {
   const projection = d3
     // .geoMercator()
     .geoNaturalEarth1()
@@ -273,39 +303,52 @@ async function drawWorld() {
         : regionFill
     })
     .style("stroke", borderStroke)
-    .style("stroke-width", "1px")
+    .style("stroke-width", "0.5px")
     .attr("cursor", "pointer")
 }
 
 // Draw and animate the migrations ////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-const regionFill = "darkslategray"
-const omittedRegionFill = "lightgrey"
-const borderStroke = "black"
+
+const regionFill = "#000000"
+const omittedRegionFill = "#737373"
+const borderStroke = "rgb(250, 250, 250, 1.0)"
+
+// https://carto.com/carto-colors/
+const colorPalettes = {
+  tealRose: ["#009392", "#72aaa1", "#f1eac8", "#d98994", "#d0587e"],
+  temps: ["#009392", "#39b185", "#e9e29c", "#e88471", "#cf597e"],
+  fall: ["#3d5941", "#778868", "#f6edbd", "#de8a5a", "#ca562c"],
+  geyser: ["#008080", "#70a494", "#f6edbd", "#de8a5a", "#ca562c"]
+}
+
+const colors = colorPalettes.tealRose
 
 const migrationColors = {
-  emigrant: "#a61322",
-  emigrantRegion: "#ffdddd",
-  migrationRegion: "#ccedff",
-  immigrant: "#269d5e",
-  immigrantRegion: "#ddffdd"
+  emigrant: colors[0],
+  emigrantRegion: colors[1],
+  migrationRegion: colors[2],
+  immigrantRegion: colors[3],
+  immigrant: colors[4]
 }
 
 const animationDurations = {
-  setBackRegions: 1000,
-  setRegionColor: 2500,
-  migration: 2500
+  resetMigration: 1000,
+  setBackRegions: 500,
+  setRegionColor: 2000,
+  initialPosition: 750,
+  migration: 1750
 }
 
-const unknownTranslation = computed(() => {
-  const x = screenSize.width * 0.075
-  const y = mapAreaHeight.value * 0.25
-  return {
-    x,
-    y
-  }
-  // mapTranslation.value.europe * 0.1 - mapTranslation.value.basel
-})
+async function drawInitialPositions() {
+  animationOngoing.value = true
+  await drawMigrationStart(migration.value.get("basel"), "basel")
+  await drawMigrationStart(migration.value.get("switzerland"), "switzerland")
+  await drawMigrationStart(migration.value.get("europe"), "europe")
+  const world = migration.value.get("world")
+  const na = migration.value.get("NA")
+  await drawMigrationStart(world.concat(na), "world")
+}
 
 function xAccessor(d, type) {
   const map = type === "start" ? "StartKarte" : "EndKarte"
@@ -319,9 +362,9 @@ function xAccessor(d, type) {
   if (d[map] !== "NA" && d[region] !== "NA") {
     xCoord = centroids.value[d[map]][d[region]][0] + mapTranslation.value[d[map]].x
   } else if (d[map] !== "NA" && d[region] === "NA") {
-    xCoord = mapTranslation.value[d[map]].x + unknownTranslation.value.x
+    xCoord = mapTranslation.value[d[map]].x + mapTranslation.value.unknown.x
   } else {
-    xCoord = mapTranslation.value.world.x + unknownTranslation.value.x
+    xCoord = mapTranslation.value.world.x + mapTranslation.value.unknown.x
   }
   return xCoord + addJitter()
 }
@@ -335,9 +378,9 @@ function yAccessor(d, type) {
   if (d[map] !== "NA" && d[region] !== "NA") {
     yCoord = centroids.value[d[map]][d[region]][1] + mapTranslation.value[d[map]].y
   } else if (d[map] !== "NA" && d[region] === "NA") {
-    yCoord = mapTranslation.value[d[map]].y + unknownTranslation.value.y
+    yCoord = mapTranslation.value[d[map]].y + mapTranslation.value.unknown.y
   } else {
-    yCoord = mapTranslation.value.world.y + unknownTranslation.value.y
+    yCoord = mapTranslation.value.world.y + mapTranslation.value.unknown.y
   }
   return yCoord + addJitter()
 }
@@ -353,49 +396,50 @@ function migrantColorAccessor(d) {
   return d.Wanderungstyp === "Wegzug" ? migrationColors.emigrant : migrationColors.immigrant
 }
 
-function resetMigration() {
-  d3.selectAll(".migrant").remove()
-  d3.selectAll(".map-region")
-    .transition()
-    .duration(animationDurations.setBackRegions)
-    .style("fill", function () {
-      const currentFill = d3.select(this).style("fill")
-      return currentFill !== omittedRegionFill ? regionFill : omittedRegionFill
-    })
+function drawMigrationStart(data, map) {
+  return new Promise((resolve) => {
+    ctr.value
+      .selectAll(`.migrant-${map}`)
+      .data(data)
+      .join(
+        (enter) => {
+          return enter
+            .append("circle")
+            .attr("class", () =>
+              map === "world" ? `migrant migrant-${map} migrant-NA` : `migrant migrant-${map}`
+            )
+            .attr("data-from-map", (d) => d.StartKarte)
+            .attr("data-to-map", (d) => d.EndKarte)
+            .attr("cx", (d) => xAccessor(d, "start"))
+            .attr("cy", (d) => yAccessor(d, "start"))
+            .attr("r", 3)
+            .attr("fill", (d) => migrantColorAccessor(d))
+            .attr("opacity", 0.0)
+        },
+        (update) => update,
+        (exit) => exit
+      )
+    const migrants = ctr.value.selectAll(`.migrant-${map}`)
+    migrants
+      .transition()
+      .duration(animationDurations.initialPosition * animationSpeed.value)
+      .attr("opacity", 0.7)
+      .on("end", resolve)
+  })
 }
 
-function drawMigrationStart(data, callback) {
-  resetMigration()
+const animationOngoing = ref(false)
 
-  ctr.value
-    .selectAll(".migrant")
-    .data(data)
-    .join(
-      (enter) => {
-        return enter
-          .append("circle")
-          .attr("class", "migrant")
-          .attr("data-from-map", (d) => d.StartKarte)
-          .attr("data-from-region", (d) => `${d.StartKarte}-${d.StartRegion}`)
-          .attr("data-to-region", (d) => `${d.EndKarte}-${d.EndRegion}`)
-          .attr("cx", (d) => xAccessor(d, "start"))
-          .attr("cy", (d) => yAccessor(d, "start"))
-          .attr("r", 3)
-          .attr("fill", (d) => migrantColorAccessor(d))
-          .attr("opacity", 0.7)
-          .on("end", callback())
-      },
-      (update) => update,
-      (exit) => exit
-    )
-}
-
-async function drawMigration() {
-  await animateMigration("basel")
-  await animateMigration("switzerland")
-  await animateMigration("europe")
-  await animateMigration("world")
-  await animateMigration("NA")
+async function animateMigration() {
+  // Basel <--> Switzerland
+  await animateMigrants("data-to-map", "switzerland", false)
+  await animateMigrants("data-from-map", "switzerland", false)
+  // Basel <--> Europe
+  await animateMigrants("data-to-map", "europe", false)
+  await animateMigrants("data-from-map", "europe", false)
+  // Basel <--> world
+  await animateMigrants("data-to-map", "world", false)
+  await animateMigrants("data-from-map", "world", true)
 }
 
 function setRegionColors(d) {
@@ -404,10 +448,12 @@ function setRegionColors(d) {
       const regions = d3.selectAll(`.${region}`)
       regions
         .transition()
-        .duration(animationDurations.setRegionColor)
+        .duration(animationDurations.setRegionColor * animationSpeed.value)
         .style("fill", function () {
-          const currCol = d3.select(this).style("fill")
-          return currCol === regionFill
+          const currCol = d3.color(d3.select(this).style("fill")).formatRgb()
+          const regionFillRgb = d3.color(regionFill).formatRgb()
+
+          return currCol === regionFillRgb
             ? isEmigrant
               ? migrationColors.emigrantRegion
               : migrationColors.immigrantRegion
@@ -428,24 +474,42 @@ function setRegionColors(d) {
   }
 }
 
-function animateMigration(map) {
+function animateMigrants(attr, map, last) {
   return new Promise((resolve) => {
-    let migrants = d3.selectAll(`[data-from-map="${map}"]`)
+    const migrants =
+      map === "world"
+        ? d3.selectAll(`[${attr}="${map}"] , [${attr}="NA"]`)
+        : d3.selectAll(`[${attr}="${map}"]`)
 
     migrants
       .transition()
-      .duration(animationDurations.migration)
+      .duration(animationDurations.migration * animationSpeed.value)
       .on("start", (d) => setRegionColors(d))
       .attr("cx", (d) => xAccessor(d, "end"))
       .attr("cy", (d) => yAccessor(d, "end"))
-      .on("end", resolve)
+      .on("end", () => {
+        if (last) {
+          animationOngoing.value = false
+        }
+        resolve()
+      })
   })
 }
 </script>
 
 <template>
-  <n-flex vertical>
-    <TheControls :is-loading="isLoading" />
-    <div id="basel-migration"></div>
+  <n-flex vertical style="flex: 1">
+    <TheControls :animation-ongoing="animationOngoing" @start-animation="startAnimation" @stop-animation="stopAnimation" />
+    <div id="basel-migration">
+      <n-flex v-if="!mapsDrawn" justify="center">
+        <n-spin />
+      </n-flex>
+    </div>
   </n-flex>
 </template>
+
+<style scoped>
+/* #basel-migration {
+  background-color: rgba(209, 47, 136, 0.39);
+} */
+</style>
