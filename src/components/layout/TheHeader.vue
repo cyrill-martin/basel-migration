@@ -6,7 +6,7 @@ import { NFlex } from "naive-ui"
   <header>
     <n-flex>
       <div class="title-container">
-        <b>Basel-Stadt: Zu- und Wegzüge seit 2006</b>
+        <b>Basel-Stadt: Zu- und Wegzüge</b>
       </div>
       <div class="nav-container">
         <nav>

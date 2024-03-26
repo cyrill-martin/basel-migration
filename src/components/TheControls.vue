@@ -72,25 +72,40 @@ async function triggerDataLoading() {
 }
 
 function skipDate(value) {
-  if (selectedMonth.value === 12 && value === 1) {
-    selectedYear.value = selectedYear.value === 2023 ? 2006 : selectedYear.value + value
-    selectedMonth.value = 1
-  } else if (selectedMonth.value === 9 && selectedYear.value === 2023 && value === 1) {
-    selectedMonth.value = 1
-    selectedYear.value = 2006
-  } else if (selectedMonth.value === 1 && value === -1) {
-    selectedYear.value = selectedYear.value === 2006 ? 2023 : selectedYear.value + value
-    selectedMonth.value = selectedYear.value === 2023 ? 9 : 12
+  const maxYear = 2023
+  const maxMonth = 9
+  let currentMonth = selectedMonth.value
+  let currentYear = selectedYear.value
+
+  if (currentMonth === 12 && value === 1) {
+    currentYear = currentYear === maxYear ? 2006 : currentYear + 1
+    currentMonth = 1
+  } else if (currentMonth === maxMonth && currentYear === maxYear && value === 1) {
+    currentYear = 2006
+    currentMonth = 1
+  } else if (currentMonth === 1 && value === -1) {
+    currentYear = currentYear === 2006 ? maxYear : currentYear - 1
+    currentMonth = currentYear === maxYear ? maxMonth : 12
   } else {
-    selectedMonth.value = selectedMonth.value + value
+    currentMonth += value
   }
+
+  selectedMonth.value = currentMonth
+  selectedYear.value = currentYear
 }
 
 async function startAnimation() {
   await triggerDataLoading()
 
   if (migrationData.value) {
-    emit("startAnimation", migrationData.value, speed.value)
+
+    const monthObj = months.find((m) => m.value === selectedMonth.value)
+
+    emit("startAnimation", {
+      data: migrationData.value,
+      speed: speed.value,
+      date: { month: monthObj.label, year: selectedYear.value.toString() }
+    })
   }
 }
 
@@ -103,7 +118,7 @@ const iconSize = ref("30")
 const isActiveControl = computed(() => selectedMonth.value && selectedYear.value)
 const controlDepth = computed(() => (isActiveControl.value ? 1 : 5))
 
-const speed = ref(1.5)
+const speed = ref(2)
 // const marks = ref({
 //   1: "langsam",
 //   3: "schnell"
@@ -127,16 +142,15 @@ const speed = ref(1.5)
         <n-select
           :disabled="disabledSelection"
           class="date-selection"
-          placeholder="Monat"
+          placeholder="Monat wählen"
           v-model:value="selectedMonth"
           :options="months"
         />
-        <n-spin v-show="isLoading" size="5" />
         <!-- Year -->
         <n-select
           :disabled="disabledSelection"
           class="date-selection"
-          placeholder="Jahr"
+          placeholder="Jahr wählen"
           v-model:value="selectedYear"
           :options="years"
         />
@@ -154,7 +168,7 @@ const speed = ref(1.5)
     <div>
       <n-space justify="center">
         <!-- Play -->
-        <span v-if="!animationOngoing" :class="{ activeControl: isActiveControl }">
+        <span v-if="!animationOngoing && !isLoading" :class="{ activeControl: isActiveControl }">
           <n-icon
             :size="iconSize"
             :depth="controlDepth"
@@ -162,6 +176,8 @@ const speed = ref(1.5)
             @click="startAnimation"
           />
         </span>
+        <!-- Spinner -->
+        <n-spin v-if="isLoading" size="small" />
         <!-- Stop -->
         <span v-if="animationOngoing">
           <n-icon class="activeControl" :size="iconSize" :component="Stop" @click="stopAnimation" />
@@ -173,7 +189,7 @@ const speed = ref(1.5)
 
 <style scoped>
 .date-selection {
-  width: 140px;
+  width: 150px;
 }
 .activeControl {
   cursor: pointer;
