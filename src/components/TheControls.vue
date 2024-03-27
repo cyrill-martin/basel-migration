@@ -1,6 +1,6 @@
 <script setup>
 import * as d3 from "d3"
-import { NSpin, NSpace, NSelect, NIcon } from "naive-ui"
+import { NSpin, NSpace, NSelect, NIcon, NSlider } from "naive-ui"
 import { ref, computed } from "vue"
 import { loadMigrationChunk } from "../utils/loadMigrationChunk.js"
 
@@ -55,7 +55,6 @@ const emit = defineEmits(["startAnimation", "stopAnimation"])
 
 const isLoading = ref(false)
 const migrationData = ref(null)
-const disabledSelection = computed(() => props.animationOngoing)
 
 async function loadMigrationData(migrationChunk) {
   const dataChunk = await loadMigrationChunk(migrationChunk)
@@ -98,7 +97,6 @@ async function startAnimation() {
   await triggerDataLoading()
 
   if (migrationData.value) {
-
     const monthObj = months.find((m) => m.value === selectedMonth.value)
 
     emit("startAnimation", {
@@ -118,29 +116,22 @@ const iconSize = ref("30")
 const isActiveControl = computed(() => selectedMonth.value && selectedYear.value)
 const controlDepth = computed(() => (isActiveControl.value ? 1 : 5))
 
-const speed = ref(2)
-// const marks = ref({
-//   1: "langsam",
-//   3: "schnell"
-// })
+// Speed slider
+const speed = ref(3)
+const marks = ref({
+  1: "langsam",
+  3: "",
+  5: "schnell"
+})
 </script>
 
 <template>
   <n-space vertical>
     <div>
       <n-space justify="center">
-        <!-- Back -->
-        <span :class="{ activeControl: isActiveControl }">
-          <n-icon
-            :size="iconSize"
-            :depth="controlDepth"
-            :component="ChevronBackCircleOutline"
-            @click="skipDate(-1)"
-          />
-        </span>
         <!-- Month -->
         <n-select
-          :disabled="disabledSelection"
+          :disabled="props.animationOngoing"
           class="date-selection"
           placeholder="Monat wählen"
           v-model:value="selectedMonth"
@@ -148,14 +139,45 @@ const speed = ref(2)
         />
         <!-- Year -->
         <n-select
-          :disabled="disabledSelection"
+          :disabled="props.animationOngoing"
           class="date-selection"
           placeholder="Jahr wählen"
           v-model:value="selectedYear"
           :options="years"
         />
+      </n-space>
+    </div>
+    <div>
+      <n-space justify="center">
+        <!-- Back -->
+        <span v-show="!props.animationOngoing" :class="{ activeControl: isActiveControl }">
+          <n-icon
+            :size="iconSize"
+            :depth="controlDepth"
+            :component="ChevronBackCircleOutline"
+            @click="skipDate(-1)"
+          />
+        </span>
+        <!-- Play -->
+        <span
+          v-if="!props.animationOngoing && !isLoading"
+          :class="{ activeControl: isActiveControl }"
+        >
+          <n-icon
+            :size="iconSize"
+            :depth="controlDepth"
+            :component="Play"
+            @click="startAnimation"
+          />
+        </span>
+        <!-- Spinner -->
+        <n-spin v-if="isLoading" size="small" />
+        <!-- Stop -->
+        <span v-if="props.animationOngoing">
+          <n-icon class="activeControl" :size="iconSize" :component="Stop" @click="stopAnimation" />
+        </span>
         <!-- Forward -->
-        <span :class="{ activeControl: isActiveControl }">
+        <span v-show="!props.animationOngoing" :class="{ activeControl: isActiveControl }">
           <n-icon
             :size="iconSize"
             :depth="controlDepth"
@@ -167,21 +189,17 @@ const speed = ref(2)
     </div>
     <div>
       <n-space justify="center">
-        <!-- Play -->
-        <span v-if="!animationOngoing && !isLoading" :class="{ activeControl: isActiveControl }">
-          <n-icon
-            :size="iconSize"
-            :depth="controlDepth"
-            :component="Play"
-            @click="startAnimation"
-          />
-        </span>
-        <!-- Spinner -->
-        <n-spin v-if="isLoading" size="small" />
-        <!-- Stop -->
-        <span v-if="animationOngoing">
-          <n-icon class="activeControl" :size="iconSize" :component="Stop" @click="stopAnimation" />
-        </span>
+        <n-slider
+          class="speed-selection"
+          v-model:value="speed"
+          :marks="marks"
+          :step="2"
+          :min="1"
+          :max="5"
+          :steps="3"
+          :tooltip="false"
+          :disabled="props.animationOngoing"
+        />
       </n-space>
     </div>
   </n-space>
@@ -193,5 +211,8 @@ const speed = ref(2)
 }
 .activeControl {
   cursor: pointer;
+}
+.speed-selection {
+  width: 310px;
 }
 </style>

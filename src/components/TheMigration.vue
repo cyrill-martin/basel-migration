@@ -42,8 +42,8 @@ async function startAnimation(obj) {
   }
 }
 
-function stopAnimation() {
-  resetMigration()
+async function stopAnimation() {
+  await resetMigration()
   animationOngoing.value = false
 }
 
@@ -80,6 +80,9 @@ function resetMigration() {
       .duration(animationDurations.resetMigration)
       .attr("opacity", 0)
       .remove()
+
+    // Remove migration paths
+    removeMigrationPaths()
 
     // Set back region colors
     d3.selectAll(".map-region")
@@ -319,35 +322,35 @@ function drawWorld() {
 ///////////////////////////////////////////////////////////////////////////
 const migrantRadius = 3
 
-const regionFill = "#000000"
-const omittedRegionFill = "#737373"
+const regionFill = "rgb(0, 0, 0)"
+const omittedRegionFill = "rgb(115, 115, 115)"
 const borderStroke = "rgb(250, 250, 250, 1.0)"
 
 // https://carto.com/carto-colors/
-const colorPalettes = {
-  tealRose: ["#009392", "#72aaa1", "#f1eac8", "#d98994", "#d0587e"],
-  temps: ["#009392", "#39b185", "#e9e29c", "#e88471", "#cf597e"],
-  fall: ["#3d5941", "#778868", "#f6edbd", "#de8a5a", "#ca562c"],
-  geyser: ["#008080", "#70a494", "#f6edbd", "#de8a5a", "#ca562c"]
-}
-
-const colors = colorPalettes.tealRose
+const colors = [
+  "rgb(208, 88, 126)",
+  "rgb(217, 137, 148)",
+  "rgb(241, 234, 200)",
+  "rgb(114, 170, 161)",
+  "rgb(0, 147, 146)"
+]
 
 const migrationColors = {
-  emigrant: colors[0],
+  emigrant: colors[0], // Wegzüger:in
   emigrantRegion: colors[1],
   migrationRegion: colors[2],
   immigrantRegion: colors[3],
-  immigrant: colors[4]
+  immigrant: colors[4] // Zuzüger:in
 }
 
 const migrantOpacity = 0.7
 
+// langsam: 1, mittel: 3, schnell: 5
 const animationDurations = {
   resetMigration: 1000,
-  setRegionColor: 2000,
-  initialPosition: 750,
-  migration: 1750
+  setRegionColor: 3900,
+  initialPosition: 2400,
+  migration: 4500
 }
 
 async function drawInitialPositions() {
@@ -432,7 +435,7 @@ function drawMigrationStart(data, map) {
     const migrants = ctr.value.selectAll(`.migrant-${map}`)
     migrants
       .transition()
-      .duration(animationDurations.initialPosition * animationSpeed.value)
+      .duration(animationDurations.initialPosition / animationSpeed.value)
       .attr("opacity", migrantOpacity)
       .on("end", resolve)
   })
@@ -455,22 +458,48 @@ async function animateMigration() {
   createLegend()
 }
 
-function setRegionColors(d) {
+function setRegionColor(d) {
   function setColor(region, isEmigrant) {
     if (region) {
       const regions = d3.selectAll(`.${region}`)
+
       regions
         .transition()
-        .duration(animationDurations.setRegionColor * animationSpeed.value)
+        .duration(animationDurations.setRegionColor / animationSpeed.value)
         .style("fill", function () {
-          const currCol = d3.color(d3.select(this).style("fill")).formatRgb()
-          const regionFillRgb = d3.color(regionFill).formatRgb()
+          const currCol = d3.select(this).style("fill")
 
-          return currCol === regionFillRgb
-            ? isEmigrant
-              ? migrationColors.emigrantRegion
-              : migrationColors.immigrantRegion
-            : migrationColors.migrationRegion
+          if (currCol === regionFill) {
+            // currCol is black
+            if (isEmigrant) {
+              // I'm red
+              return migrationColors.emigrantRegion // set to red
+            } else {
+              // I'm green
+              return migrationColors.immigrantRegion // set to green
+            }
+          } else if (currCol === migrationColors.emigrantRegion) {
+            // currCol is red
+            if (isEmigrant) {
+              // I'm red
+              return migrationColors.emigrantRegion // keep red
+            } else {
+              // I'm green
+              return migrationColors.migrationRegion // set to yellow
+            }
+          } else if (currCol === migrationColors.immigrantRegion) {
+            // currCol is green
+            if (isEmigrant) {
+              // I'm red
+              return migrationColors.migrationRegion // set to yellow
+            } else {
+              // I'm green
+              return migrationColors.immigrantRegion // keep green
+            }
+          } else {
+            // currCol is yellow
+            return migrationColors.migrationRegion // keep yellow
+          }
         })
     }
   }
@@ -478,16 +507,11 @@ function setRegionColors(d) {
   const startRegion = d.StartRegion !== "NA" ? `${d.StartKarte}-${d.StartRegion}` : null
   const endRegion = d.EndRegion !== "NA" ? `${d.EndKarte}-${d.EndRegion}` : null
 
-  if (d.Wanderungstyp === "Wegzug") {
-    setColor(startRegion, true)
-    setColor(endRegion, true)
-  } else {
-    setColor(startRegion, false)
-    setColor(endRegion, false)
-  }
+  setColor(startRegion, d.Wanderungstyp === "Wegzug")
+  setColor(endRegion, d.Wanderungstyp === "Wegzug")
 }
 
-function animateMigrants(direction, map, last) {
+async function animateMigrants(direction, map, last) {
   let migrants =
     map === "world"
       ? d3.selectAll(`[${direction}="${map}"] , [${direction}="NA"]`)
@@ -495,36 +519,31 @@ function animateMigrants(direction, map, last) {
 
   let migrantSelections = []
 
-  if (migrants.size() > 1000) {
-    console.log("It's too much migrants to visualize!!", migrants.size())
-    // Define the maximum size for each part
-    const maxSize = Math.ceil(migrants.size() / 2) // Split into n parts
+  console.log(migrants.size())
 
-    // Loop to split the selection into four parts
-    for (var i = 0; i < 2; i++) {
+  if (migrants.size() > 800) {
+    const numberOfParts = Math.floor(migrants.size() / 300)
+
+    const maxSize = Math.ceil(migrants.size() / numberOfParts)
+
+    for (let i = 0; i < numberOfParts; i++) {
       const startIndex = i * maxSize
       const endIndex = Math.min(startIndex + maxSize, migrants.size())
 
-      var part = migrants.filter(function (d, index) {
-        return index >= startIndex && index < endIndex
-      })
-
-      // Add the current part to the array
+      let part = migrants.filter((_, index) => index >= startIndex && index < endIndex)
       migrantSelections.push(part)
     }
   } else {
     migrantSelections = [migrants]
   }
 
-  return new Promise((resolve) => {
-    migrantSelections.forEach(function (selection) {
+  for (const selection of migrantSelections) {
+    await new Promise((resolve) => {
       selection
         .transition()
-        .duration(animationDurations.migration * animationSpeed.value)
+        .duration(animationDurations.migration / animationSpeed.value)
         .on("start", (d) => {
-          // Region colors
-          setRegionColors(d)
-          // Lines
+          setRegionColor(d)
           ctr.value
             .append("path")
             .datum(d)
@@ -533,32 +552,34 @@ function animateMigrants(direction, map, last) {
             .attr("stroke", (d) => migrantColorAccessor(d))
             .attr("stroke-width", "1px")
             .attr("opacity", 0.1)
-            .attr("d", (d) => {
-              return `M${xAccessor(d, "start")},${yAccessor(d, "start")}L${xAccessor(d, "start")},${yAccessor(d, "start")}`
-            })
+            .attr(
+              "d",
+              (d) =>
+                `M${xAccessor(d, "start")},${yAccessor(d, "start")}L${xAccessor(d, "start")},${yAccessor(d, "start")}`
+            )
             .transition()
-            .duration(animationDurations.migration * animationSpeed.value)
-            .attr("d", (d) => {
-              return `M${xAccessor(d, "start")},${yAccessor(d, "start")}L${xAccessor(d, "end")},${yAccessor(d, "end")}`
-            }) * / */
+            .duration(animationDurations.migration / animationSpeed.value)
+            .attr(
+              "d",
+              (d) =>
+                `M${xAccessor(d, "start")},${yAccessor(d, "start")}L${xAccessor(d, "end")},${yAccessor(d, "end")}`
+            )
         })
-        // Circle transition
         .attr("cx", (d) => xAccessor(d, "end"))
         .attr("cy", (d) => yAccessor(d, "end"))
-        .on("end", () => {
-          if (last) {
-            animationOngoing.value = false
-          }
-          resolve()
-        })
+        .on("end", resolve)
     })
-  })
+  }
+
+  if (last) {
+    animationOngoing.value = false
+  }
 }
 
 function removeMigrationPaths() {
   d3.selectAll(".migration-path")
     .transition()
-    .duration(animationDurations.resetMigration * 0.5)
+    .duration(animationDurations.resetMigration)
     .attr("opacity", 0)
     .remove()
 }
@@ -606,8 +627,9 @@ function createLegend() {
     .append("text")
     .attr("x", 0)
     .attr("y", 0)
-    .text("Basel-Stadt:")
+    .text(`${selectedDate.value}`)
     .attr("font-size", legendFontSize)
+    .attr("font-weight", "bold")
 
   legendTitleGroup
     .append("text")
@@ -620,9 +642,9 @@ function createLegend() {
     .append("text")
     .attr("x", 0)
     .attr("y", spacingVertical * 2)
-    .text(`${selectedDate.value}`)
+    .text("Basel-Stadt")
     .attr("font-size", legendFontSize)
-    .attr("font-weight", "bold")
+    
 
   const legendItemsGroup = legendContainer
     .append("g")
@@ -639,7 +661,7 @@ function createLegend() {
 
   legendCircleItems
     .append("circle")
-    .attr("cx", migrantRadius * 2)
+    .attr("cx", migrantRadius * 2.5)
     .attr("cy", 0)
     .attr("r", migrantRadius)
     .attr("stroke", (d) => d.color)
@@ -670,7 +692,7 @@ function createLegend() {
     .append("rect")
     .attr("x", 0)
     .attr("y", -spacingVertical * 0.5)
-    .attr("width", migrantRadius * 4)
+    .attr("width", migrantRadius * 5)
     .attr("height", spacingVertical * 0.7)
     .attr("fill", (d) => d.color)
     .attr("dominant-baseline", "middle")
@@ -683,13 +705,16 @@ function createLegend() {
     .attr("font-size", legendFontSize)
     .attr("dominant-baseline", "middle")
 
-  const legendTranslationX = screenSize.isMobile
-    ? centroids.value.basel.Riehen[0] -
-      (centroids.value.basel.Riehen[0] - centroids.value.basel.Hirzbrunnen[0]) * 0.5
-    : centroids.value.basel.Riehen[0]
-  const legendTranslationY = screenSize.isMobile
-    ? centroids.value.basel.Gundeldingen[1]
-    : centroids.value.basel.AltstadtGrossbasel[1]
+  const legendTranslationX =
+    screenSize.width <= screenSize.height
+      ? centroids.value.basel.Riehen[0] -
+        (centroids.value.basel.Riehen[0] - centroids.value.basel.Hirzbrunnen[0]) * 0.5
+      : centroids.value.basel.Bettingen[0] +
+        (centroids.value.basel.Bettingen[0] - centroids.value.basel.Riehen[0])
+  const legendTranslationY =
+    screenSize.width <= screenSize.height
+      ? centroids.value.basel.Breite[1]
+      : centroids.value.basel.StJohann[1]
 
   legendContainer.attr("transform", `translate(${legendTranslationX},${legendTranslationY})`)
 }
@@ -710,8 +735,4 @@ function createLegend() {
   </n-flex>
 </template>
 
-<style scoped>
-/* #basel-migration {
-  background-color: rgba(209, 47, 136, 0.39);
-} */
-</style>
+<style scoped></style>
