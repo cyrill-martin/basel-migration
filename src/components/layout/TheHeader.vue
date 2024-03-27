@@ -6,7 +6,8 @@ import { NFlex } from "naive-ui"
   <header>
     <n-flex>
       <div class="title-container">
-        <b>Basel-Stadt: Zu- und Wegzüge</b>
+        <span class="h1">Basel-Stadt: Zu- und Wegzüge</span><br>
+        <span class="h2">Januar 2006 bis September 2023</span>
       </div>
       <div class="nav-container">
         <nav>
@@ -21,9 +22,15 @@ import { NFlex } from "naive-ui"
 header {
   padding: 1rem;
 }
+.h1 {
+  font-size: 18px;
+  font-weight: bold;
+}
+.h2 {
+  font-size: 14px;
+}
 .title-container {
   flex: 4;
-  font-size: 1.1rem;
 }
 .nav-container {
   display: flex;

@@ -76,17 +76,19 @@ function skipDate(value) {
   let currentMonth = selectedMonth.value
   let currentYear = selectedYear.value
 
-  if (currentMonth === 12 && value === 1) {
-    currentYear = currentYear === maxYear ? 2006 : currentYear + 1
-    currentMonth = 1
-  } else if (currentMonth === maxMonth && currentYear === maxYear && value === 1) {
-    currentYear = 2006
-    currentMonth = 1
-  } else if (currentMonth === 1 && value === -1) {
-    currentYear = currentYear === 2006 ? maxYear : currentYear - 1
-    currentMonth = currentYear === maxYear ? maxMonth : 12
-  } else {
-    currentMonth += value
+  if (currentMonth && currentYear) {
+    if (currentMonth === 12 && value === 1) {
+      currentYear = currentYear === maxYear ? 2006 : currentYear + 1
+      currentMonth = 1
+    } else if (currentMonth === maxMonth && currentYear === maxYear && value === 1) {
+      currentYear = 2006
+      currentMonth = 1
+    } else if (currentMonth === 1 && value === -1) {
+      currentYear = currentYear === 2006 ? maxYear : currentYear - 1
+      currentMonth = currentYear === maxYear ? maxMonth : 12
+    } else {
+      currentMonth += value
+    }
   }
 
   selectedMonth.value = currentMonth
@@ -154,6 +156,7 @@ const marks = ref({
           <n-icon
             :size="iconSize"
             :depth="controlDepth"
+            :color="'rgb(80, 80, 80)'"
             :component="ChevronBackCircleOutline"
             @click="skipDate(-1)"
           />
@@ -181,6 +184,7 @@ const marks = ref({
           <n-icon
             :size="iconSize"
             :depth="controlDepth"
+            :color="'rgb(80, 80, 80)'"
             :component="ChevronForwardCircleOutline"
             @click="skipDate(1)"
           />
@@ -213,6 +217,6 @@ const marks = ref({
   cursor: pointer;
 }
 .speed-selection {
-  width: 310px;
+  width: 180px;
 }
 </style>
