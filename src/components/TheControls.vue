@@ -1,6 +1,6 @@
 <script setup>
 import * as d3 from "d3"
-import { NSpin, NSpace, NSelect, NIcon, NSlider } from "naive-ui"
+import { NSpin, NSpace, NSelect, NIcon, NRadioGroup, NRadioButton } from "naive-ui"
 import { ref, computed } from "vue"
 import { loadMigrationChunk } from "../utils/loadMigrationChunk.js"
 
@@ -10,6 +10,16 @@ import {
   Stop,
   ChevronForwardCircleOutline
 } from "@vicons/ionicons5"
+
+const maxYear = 2023
+const maxMonth = 10
+
+const selectedYear = ref(null)
+const selectedMonth = ref(null)
+
+const invalidSelection = computed(() => {
+  return selectedMonth.value > maxMonth && selectedYear.value === maxYear
+})
 
 const years = [
   { label: "2006", value: 2006 },
@@ -47,9 +57,6 @@ const months = [
   { label: "Dezember", value: 12 }
 ]
 
-const selectedYear = ref(null)
-const selectedMonth = ref(null)
-
 const props = defineProps(["animationOngoing"])
 const emit = defineEmits(["startAnimation", "stopAnimation"])
 
@@ -63,7 +70,7 @@ async function loadMigrationData(migrationChunk) {
 }
 
 async function triggerDataLoading() {
-  if (selectedMonth.value && selectedYear.value) {
+  if (selectedMonth.value && selectedYear.value && !invalidSelection.value) {
     isLoading.value = true
     migrationData.value = await loadMigrationData(`${selectedYear.value}-${selectedMonth.value}`)
     isLoading.value = false
@@ -71,8 +78,6 @@ async function triggerDataLoading() {
 }
 
 function skipDate(value) {
-  const maxYear = 2023
-  const maxMonth = 9
   let currentMonth = selectedMonth.value
   let currentYear = selectedYear.value
 
@@ -120,11 +125,11 @@ const controlDepth = computed(() => (isActiveControl.value ? 1 : 5))
 
 // Speed slider
 const speed = ref(3)
-const marks = ref({
-  1: "langsam",
-  3: "",
-  5: "schnell"
-})
+const speeds = ref([
+  { value: 1, label: "langsam" },
+  { value: 3, label: "mittel" },
+  { value: 5, label: "schnell" }
+])
 </script>
 
 <template>
@@ -148,6 +153,13 @@ const marks = ref({
           :options="years"
         />
       </n-space>
+    </div>
+    <div v-if="invalidSelection">
+      <n-space justify="center"
+        ><span class="date-selection-warning"
+          >Die jüngsten Daten stammen von Oktober 2023!</span
+        ></n-space
+      >
     </div>
     <div>
       <n-space justify="center">
@@ -193,17 +205,15 @@ const marks = ref({
     </div>
     <div>
       <n-space justify="center">
-        <n-slider
-          class="speed-selection"
-          v-model:value="speed"
-          :marks="marks"
-          :step="2"
-          :min="1"
-          :max="5"
-          :steps="3"
-          :tooltip="false"
-          :disabled="props.animationOngoing"
-        />
+        <n-radio-group v-model:value="speed" size="small">
+          <n-radio-button
+            v-for="speed in speeds"
+            :key="speed.value"
+            :value="speed.value"
+            :label="speed.label"
+            :disabled="props.animationOngoing"
+          />
+        </n-radio-group>
       </n-space>
     </div>
   </n-space>
@@ -213,10 +223,11 @@ const marks = ref({
 .date-selection {
   width: 150px;
 }
+.date-selection-warning {
+  font-size: 12px;
+  color: red;
+}
 .activeControl {
   cursor: pointer;
-}
-.speed-selection {
-  width: 180px;
 }
 </style>

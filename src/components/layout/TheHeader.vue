@@ -7,7 +7,7 @@ import { NFlex } from "naive-ui"
     <n-flex>
       <div class="title-container">
         <span class="h1">Basel-Stadt: Zu- und Wegzüge</span><br>
-        <span class="h2">Januar 2006 bis September 2023</span>
+        <span class="h2">Januar 2006 bis Oktober 2023</span>
       </div>
       <div class="nav-container">
         <nav>

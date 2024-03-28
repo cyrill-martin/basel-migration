@@ -518,9 +518,7 @@ async function animateMigrants(direction, map, last) {
       : d3.selectAll(`[${direction}="${map}"]`)
 
   let migrantSelections = []
-
-  console.log(migrants.size())
-
+  
   if (migrants.size() > 800) {
     const numberOfParts = Math.floor(migrants.size() / 300)
 
