@@ -5,7 +5,6 @@ import { onMounted, ref, computed, watch } from "vue"
 import { debounce } from "../utils/debounce.js"
 import { useScreenSizeStore } from "../stores/screenSize.js"
 import { loadMapData } from "../utils/loadMapData.js"
-// import { loadMigrationChunk } from "../utils/loadMigrationChunk.js"
 import { getCentroids } from "../utils/getCentroids.js"
 import { stripMapName } from "../utils/stripMapName.js"
 import TheControls from "./TheControls.vue"
@@ -14,7 +13,6 @@ const screenSize = useScreenSizeStore()
 
 // Handle data loading, map creation, and animation ///////////////////////
 ///////////////////////////////////////////////////////////////////////////
-
 onMounted(() => {
   createMigrationViz()
 })
@@ -82,7 +80,8 @@ function resetMigration() {
       .remove()
 
     // Remove migration paths
-    removeMigrationPaths()
+    toggleMigrationPaths(false, true)
+    migrationPaths.value = false
 
     // Set back region colors
     d3.selectAll(".map-region")
@@ -148,6 +147,7 @@ async function loadMaps() {
 ///////////////////////////////////////////////////////////////////////////
 const svg = ref(null)
 const ctr = ref(null)
+const migrationsCtr = ref(null)
 
 const baselCtr = ref(null)
 const switzerlandCtr = ref(null)
@@ -176,6 +176,14 @@ function drawMaps() {
   drawEurope()
   drawWorld()
   mapsDrawn.value = true
+  addMapMouseEvents()
+}
+
+function addMapMouseEvents() {
+  addRegionMouseEvents("basel")
+  addRegionMouseEvents("switzerland")
+  addRegionMouseEvents("europe")
+  addRegionMouseEvents("world")
 }
 
 // Draw Basel
@@ -202,7 +210,7 @@ function drawBasel() {
     .data(baselMap.value.features)
     .enter()
     .append("path")
-    .attr("class", (d) => `map-region basel-${stripMapName(d.properties.wov_name)}`)
+    .attr("class", (d) => `map-region basel-region basel-${stripMapName(d.properties.wov_name)}`)
     .attr("d", path)
     .style("fill", regionFill)
     .style("stroke", borderStroke)
@@ -234,7 +242,10 @@ function drawSwitzerland() {
     .data(switzerlandMap.value.features)
     .enter()
     .append("path")
-    .attr("class", (d) => `map-region switzerland-${stripMapName(d.properties.NAME)}`)
+    .attr(
+      "class",
+      (d) => `map-region switzerland-region switzerland-${stripMapName(d.properties.NAME)}`
+    )
     .attr("d", path)
     .style("fill", (d) => {
       return d.properties.NAME === "Basel-Stadt" ? omittedRegionFill : regionFill
@@ -268,7 +279,7 @@ function drawEurope() {
     .data(europeMap.value.features)
     .enter()
     .append("path")
-    .attr("class", (d) => `map-region europe-${stripMapName(d.properties.name)}`)
+    .attr("class", (d) => `map-region europe-region europe-${stripMapName(d.properties.name)}`)
     .attr("d", path)
     .style("fill", (d) => {
       return d.properties.name === "Switzerland" ? omittedRegionFill : regionFill
@@ -281,7 +292,6 @@ function drawEurope() {
 // Draw the world
 function drawWorld() {
   const projection = d3
-    // .geoMercator()
     .geoNaturalEarth1()
     .fitSize(
       [screenSize.width / 2, (mapAreaHeight.value / 2) * (1 - worldMapTranslationFactor)],
@@ -306,7 +316,7 @@ function drawWorld() {
     .data(worldMap.value.features)
     .enter()
     .append("path")
-    .attr("class", (d) => `map-region world-${stripMapName(d.properties.name)}`)
+    .attr("class", (d) => `map-region world-region world-${stripMapName(d.properties.name)}`)
     .attr("d", path)
     .style("fill", (d) => {
       return d.properties.continent === "Europe" && d.properties.name !== "Russia"
@@ -328,26 +338,28 @@ const borderStroke = "rgb(250, 250, 250, 1.0)"
 
 // https://carto.com/carto-colors/
 const colors = [
-  "rgb(208, 88, 126)",
-  "rgb(217, 137, 148)",
-  "rgb(241, 234, 200)",
-  "rgb(114, 170, 161)",
-  "rgb(0, 147, 146)"
+  "rgb(208, 88, 126)", // Emigrant
+  "rgb(217, 137, 148)", // Emigrant region
+  "rgb(241, 234, 200)", // Migration region
+  "rgb(114, 170, 161)", // Immigrant region
+  "rgb(0, 147, 146)" // Imigrant
 ]
 
 const migrationColors = {
-  emigrant: colors[0], // Wegzüger:in
+  emigrant: colors[0],
   emigrantRegion: colors[1],
   migrationRegion: colors[2],
   immigrantRegion: colors[3],
-  immigrant: colors[4] // Zuzüger:in
+  immigrant: colors[4],
+  raisedEmigrantRegion: "rgb(247, 64, 89)",
+  raisedImmigrantRegion: "rgb(41, 230, 199)"
 }
 
 const migrantOpacity = 0.7
 
 // langsam: 1, mittel: 3, schnell: 5
 const animationDurations = {
-  resetMigration: 1000,
+  resetMigration: 250,
   setRegionColor: 3900,
   initialPosition: 2400,
   migration: 4500
@@ -366,9 +378,6 @@ async function drawInitialPositions() {
 function xAccessor(d, type) {
   const map = type === "start" ? "StartKarte" : "EndKarte"
   const region = type === "start" ? "StartRegion" : "EndRegion"
-
-  // console.log(d[map])
-  // console.log(d[region])
 
   let xCoord
 
@@ -422,11 +431,15 @@ function drawMigrationStart(data, map) {
               map === "world" ? `migrant migrant-${map} migrant-NA` : `migrant migrant-${map}`
             )
             .attr("data-from-map", (d) => d.StartKarte)
+            .attr("data-from-region", (d) => d.StartRegion)
             .attr("data-to-map", (d) => d.EndKarte)
+            .attr("data-to-region", (d) => d.EndRegion)
             .attr("cx", (d) => xAccessor(d, "start"))
             .attr("cy", (d) => yAccessor(d, "start"))
             .attr("r", migrantRadius)
             .attr("fill", (d) => migrantColorAccessor(d))
+            .attr("stroke", (d) => migrantColorAccessor(d))
+            .attr("stroke-width", "1px")
             .attr("opacity", 0.0)
         },
         (update) => update,
@@ -444,6 +457,11 @@ function drawMigrationStart(data, map) {
 const animationOngoing = ref(false)
 
 async function animateMigration() {
+  migrationsCtr.value = await ctr.value
+    .append("g")
+    .attr("id", "migrations-ctr")
+    .attr("transform", `translate(0, 0)`)
+
   // Basel <--> Switzerland
   await animateMigrants("data-to-map", "switzerland", false)
   await animateMigrants("data-from-map", "switzerland", false)
@@ -454,53 +472,46 @@ async function animateMigration() {
   await animateMigrants("data-to-map", "world", false)
   await animateMigrants("data-from-map", "world", true)
 
-  removeMigrationPaths()
   createLegend()
+  addMigrantMouseEvents()
+  toggleMigrationPaths(false)
 }
 
 function setRegionColor(d) {
   function setColor(region, isEmigrant) {
     if (region) {
       const regions = d3.selectAll(`.${region}`)
-
+      let regionFillColor
       regions
         .transition()
         .duration(animationDurations.setRegionColor / animationSpeed.value)
         .style("fill", function () {
           const currCol = d3.select(this).style("fill")
-
+          let fillColor
           if (currCol === regionFill) {
             // currCol is black
-            if (isEmigrant) {
-              // I'm red
-              return migrationColors.emigrantRegion // set to red
-            } else {
-              // I'm green
-              return migrationColors.immigrantRegion // set to green
-            }
+            fillColor = isEmigrant
+              ? migrationColors.emigrantRegion
+              : migrationColors.immigrantRegion
           } else if (currCol === migrationColors.emigrantRegion) {
             // currCol is red
-            if (isEmigrant) {
-              // I'm red
-              return migrationColors.emigrantRegion // keep red
-            } else {
-              // I'm green
-              return migrationColors.migrationRegion // set to yellow
-            }
+            fillColor = isEmigrant
+              ? migrationColors.emigrantRegion
+              : migrationColors.migrationRegion
           } else if (currCol === migrationColors.immigrantRegion) {
             // currCol is green
-            if (isEmigrant) {
-              // I'm red
-              return migrationColors.migrationRegion // set to yellow
-            } else {
-              // I'm green
-              return migrationColors.immigrantRegion // keep green
-            }
+            fillColor = isEmigrant
+              ? migrationColors.migrationRegion
+              : migrationColors.immigrantRegion
           } else {
             // currCol is yellow
-            return migrationColors.migrationRegion // keep yellow
+            fillColor = migrationColors.migrationRegion
           }
+          // Update region with final color (used later for migrant mouse events)
+          regionFillColor = fillColor
+          return fillColor
         })
+        .attr("data-fill", regionFillColor)
     }
   }
 
@@ -518,7 +529,7 @@ async function animateMigrants(direction, map, last) {
       : d3.selectAll(`[${direction}="${map}"]`)
 
   let migrantSelections = []
-  
+
   if (migrants.size() > 800) {
     const numberOfParts = Math.floor(migrants.size() / 300)
 
@@ -542,14 +553,14 @@ async function animateMigrants(direction, map, last) {
         .duration(animationDurations.migration / animationSpeed.value)
         .on("start", (d) => {
           setRegionColor(d)
-          ctr.value
+          migrationsCtr.value
             .append("path")
             .datum(d)
             .attr("class", "migration-path")
             .attr("fill", "none")
             .attr("stroke", (d) => migrantColorAccessor(d))
             .attr("stroke-width", "1px")
-            .attr("opacity", 0.1)
+            .attr("opacity", (d) => (d.Wanderungstyp === "Wegzug" ? 0.2 : 0.1))
             .attr(
               "d",
               (d) =>
@@ -565,6 +576,7 @@ async function animateMigrants(direction, map, last) {
         })
         .attr("cx", (d) => xAccessor(d, "end"))
         .attr("cy", (d) => yAccessor(d, "end"))
+        .attr("cursor", "pointer")
         .on("end", resolve)
     })
   }
@@ -574,7 +586,15 @@ async function animateMigrants(direction, map, last) {
   }
 }
 
+const migrationPaths = ref(null)
+
+function togglePaths(value) {
+  // Emitted from TheControls
+  toggleMigrationPaths(value)
+}
+
 function removeMigrationPaths() {
+  // Remove paths
   d3.selectAll(".migration-path")
     .transition()
     .duration(animationDurations.resetMigration)
@@ -582,34 +602,57 @@ function removeMigrationPaths() {
     .remove()
 }
 
+function toggleMigrationPaths(showPaths, reset = false) {
+  if (!showPaths) {
+    if (!reset) {
+      // Clone and store paths in ref
+      migrationPaths.value = d3
+        .selectAll(".migration-path")
+        .nodes()
+        .map((node) => node.cloneNode(true))
+      // Remove paths
+      removeMigrationPaths()
+    } else {
+      migrationPaths.value = null
+      // Remove paths
+      removeMigrationPaths()
+    }
+  } else {
+    // Append cloned paths
+    migrationPaths.value.forEach((path) => {
+      migrationsCtr.value.node().appendChild(path)
+    })
+  }
+}
+
 function createLegend() {
   const legendItems = {
     circles: [
       {
         color: migrationColors.immigrant,
-        label: "Zuzüger:in"
+        label: "Basler Zuzüger:in"
       },
       {
         color: migrationColors.emigrant,
-        label: "Wegzüger:in"
+        label: "Basler Wegzüger:in"
       }
     ],
     rectangles: [
       {
         color: migrationColors.immigrantRegion,
-        label: "Nur Zuzüger:innen"
+        label: "Nur Basler Zuzüger:innen"
       },
       {
         color: migrationColors.emigrantRegion,
-        label: "Nur Wegzüger:innen"
+        label: "Nur Basler Wegzüger:innen"
       },
       {
         color: migrationColors.migrationRegion,
-        label: "Zu- und Wegzüger:innen"
+        label: "Basler Zu- und Wegzüger:innen"
       },
       {
         color: regionFill,
-        label: "Keine Migration"
+        label: "Keine Basler Migration"
       }
     ]
   }
@@ -642,7 +685,6 @@ function createLegend() {
     .attr("y", spacingVertical * 2)
     .text("Basel-Stadt")
     .attr("font-size", legendFontSize)
-    
 
   const legendItemsGroup = legendContainer
     .append("g")
@@ -661,7 +703,7 @@ function createLegend() {
     .append("circle")
     .attr("cx", migrantRadius * 2.5)
     .attr("cy", 0)
-    .attr("r", migrantRadius)
+    .attr("r", migrantRadius * 1.5)
     .attr("stroke", (d) => d.color)
     .attr("fill", (d) => d.color)
     .attr("opacity", migrantOpacity)
@@ -716,14 +758,138 @@ function createLegend() {
 
   legendContainer.attr("transform", `translate(${legendTranslationX},${legendTranslationY})`)
 }
+
+function getGeoJsonNameSelectorDOM(map) {
+  // How to selected the region name as given in the DOM
+  return map === "basel" ? "wov_name" : map === "switzerland" ? "NAME" : "name"
+}
+
+function getGeoJsonNameSelectorUX(map) {
+  // How to selected the region name as presented to the user
+  return map === "basel" ? "wov_name" : map === "switzerland" ? "NAME" : "name_de"
+}
+
+function getRegionNameDOM(regionData, selector) {
+  return stripMapName(regionData["properties"][selector])
+}
+
+function getRegionNameUX(regionData, selector) {
+  return regionData["properties"][selector]
+}
+
+function addRegionMouseEvents(map) {
+  const regionSelection = d3.selectAll(`.${map}-region`)
+
+  const htmlContainer = document.getElementById("basel-migration")
+  const htmlContainerRect = htmlContainer.getBoundingClientRect()
+
+  regionSelection.on("mouseover mouseout", function (event) {
+    const regionData = d3.select(this).datum()
+
+    const nameSelectorDOM = getGeoJsonNameSelectorDOM(map)
+    const nameSelectorUX = getGeoJsonNameSelectorUX(map)
+
+    const regionNameDOM = getRegionNameDOM(regionData, nameSelectorDOM)
+    const regionNameUX = getRegionNameUX(regionData, nameSelectorUX)
+
+    const isEmigrant = map === "basel"
+
+    // Offsets to hit the centroids
+    const xOffset = map === "basel" || map === "switzerland" ? -16 : -32
+    let yOffset = map === "basel" || map === "europe" ? -16 : -32
+
+    // Offset to place the tooltips top right of the centroids
+    yOffset = -60
+
+    // Raise emigrants or immigrants when hovering regions
+    if (migration.value && !animationOngoing.value) {
+      const migrantSelection = d3.selectAll(`[data-from-region=${regionNameDOM}]`)
+      migrantSelection
+        .attr(
+          "stroke",
+          event.type === "mouseover"
+            ? regionFill
+            : isEmigrant
+              ? migrationColors.emigrant
+              : migrationColors.immigrant
+        )
+        .attr("stroke-width", event.type === "mouseover" ? "2px" : "1px")
+        .attr("r", event.type === "mouseover" ? migrantRadius * 2 : migrantRadius)
+        .attr("opacity", event.type === "mouseover" ? 1 : migrantOpacity)
+        .raise()
+    }
+
+    // Show/hide region tooltip
+    d3.select("#region-tooltip")
+      .html(regionNameUX)
+      .style("display", event.type === "mouseover" ? "block" : "none")
+      .style(
+        "left",
+        `${htmlContainerRect.x + (mapTranslation.value[map].x + centroids.value[map][regionNameDOM][0]) + xOffset}px`
+      )
+      .style(
+        "top",
+        `${htmlContainerRect.y + (mapTranslation.value[map].y + centroids.value[map][regionNameDOM][1]) + yOffset}px`
+      )
+  })
+}
+
+function addMigrantMouseEvents() {
+  const migrantSelection = d3.selectAll(".migrant")
+
+  migrantSelection.on("mouseover mouseout", function (event) {
+    const migrant = d3.select(this)
+    const migrantData = migrant.datum()
+
+    const isEmigrant = migrantData.Wanderungstyp === "Wegzug"
+
+    let originRegion = isEmigrant ? migrantData.VonWohnviertel : migrantData.StartRegion
+    originRegion = stripMapName(originRegion)
+
+    const originRegionElements = d3.selectAll(`.${migrantData.StartKarte}-${originRegion}`)
+
+    const loweredRegionColor = originRegionElements.node().getAttribute("data-fill")
+    const raisedRegionColor = isEmigrant ? migrationColors.raisedEmigrantRegion : migrationColors.raisedImmigrantRegion
+
+    // Raise origin region
+    originRegionElements
+      .style("fill", event.type === "mouseover" ? raisedRegionColor : loweredRegionColor)
+      .style("stroke", event.type === "mouseover" ? raisedRegionColor : borderStroke)
+      .style("stroke-width", event.type === "mouseover" ? "4px" : migrantData.StartKarte === "world" ? "0.5px" : "1px")
+
+    if (event.type === "mouseover") {
+      originRegionElements.raise()
+    } else {
+      originRegionElements.order()
+    }
+
+    // Raise migrant
+    migrant
+      .attr(
+        "stroke",
+        event.type === "mouseover"
+          ? regionFill
+          : isEmigrant
+            ? migrationColors.emigrant
+            : migrationColors.immigrant
+      )
+      .attr("stroke-width", event.type === "mouseover" ? "2px" : "1px")
+      .attr("r", event.type === "mouseover" ? migrantRadius * 2 : migrantRadius)
+      .attr("opacity", event.type === "mouseover" ? 1 : migrantOpacity)
+      .raise()
+  })
+}
 </script>
 
 <template>
+  <div id="region-tooltip" class="tooltip"></div>
+  <div id="migrant-tooltip" class="tooltip"></div>
   <n-flex vertical style="flex: 1">
     <TheControls
       :animation-ongoing="animationOngoing"
       @start-animation="startAnimation"
       @stop-animation="stopAnimation"
+      @toggle-paths="togglePaths"
     />
     <div id="basel-migration">
       <n-flex v-if="!mapsDrawn" justify="center">
@@ -733,4 +899,15 @@ function createLegend() {
   </n-flex>
 </template>
 
-<style scoped></style>
+<style scoped>
+.tooltip {
+  position: absolute;
+  background-color: black;
+  border: solid 1px white;
+  color: white;
+  padding: 1px 5px 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: none;
+}
+</style>

@@ -1,6 +1,15 @@
 <script setup>
 import * as d3 from "d3"
-import { NSpin, NSpace, NSelect, NIcon, NRadioGroup, NRadioButton } from "naive-ui"
+import {
+  NSpin,
+  NSpace,
+  NSelect,
+  NIcon,
+  NRadioGroup,
+  NRadioButton,
+  NSwitch,
+  NTooltip
+} from "naive-ui"
 import { ref, computed } from "vue"
 import { loadMigrationChunk } from "../utils/loadMigrationChunk.js"
 
@@ -58,7 +67,7 @@ const months = [
 ]
 
 const props = defineProps(["animationOngoing"])
-const emit = defineEmits(["startAnimation", "stopAnimation"])
+const emit = defineEmits(["startAnimation", "stopAnimation", "togglePaths"])
 
 const isLoading = ref(false)
 const migrationData = ref(null)
@@ -74,6 +83,8 @@ async function triggerDataLoading() {
     isLoading.value = true
     migrationData.value = await loadMigrationData(`${selectedYear.value}-${selectedMonth.value}`)
     isLoading.value = false
+  } else {
+    migrationData.value = null
   }
 }
 
@@ -100,22 +111,33 @@ function skipDate(value) {
   selectedYear.value = currentYear
 }
 
+const monthObj = computed(() => {
+  return months.find((m) => m.value === selectedMonth.value)
+})
+
+const clickedPlay = ref(false)
+
 async function startAnimation() {
+  clickedPlay.value = true
+  toggleValue.value = false
+
   await triggerDataLoading()
 
   if (migrationData.value) {
-    const monthObj = months.find((m) => m.value === selectedMonth.value)
-
     emit("startAnimation", {
       data: migrationData.value,
       speed: speed.value,
-      date: { month: monthObj.label, year: selectedYear.value.toString() }
+      date: { month: monthObj.value.label, year: selectedYear.value.toString() }
     })
   }
 }
 
 function stopAnimation() {
   emit("stopAnimation")
+}
+
+function togglePaths() {
+  emit("togglePaths", toggleValue.value)
 }
 
 // Handle icon controls
@@ -130,6 +152,12 @@ const speeds = ref([
   { value: 3, label: "mittel" },
   { value: 5, label: "schnell" }
 ])
+
+const toggleValue = ref(false)
+
+const toolTipPlacement = computed(() => {
+  return speed.value === 1 ? "top-start" : speed.value === 3 ? "top" : "top-end"
+})
 </script>
 
 <template>
@@ -143,6 +171,7 @@ const speeds = ref([
           placeholder="Monat wählen"
           v-model:value="selectedMonth"
           :options="months"
+          size="large"
         />
         <!-- Year -->
         <n-select
@@ -151,6 +180,7 @@ const speeds = ref([
           placeholder="Jahr wählen"
           v-model:value="selectedYear"
           :options="years"
+          size="large"
         />
       </n-space>
     </div>
@@ -204,16 +234,30 @@ const speeds = ref([
       </n-space>
     </div>
     <div>
-      <n-space justify="center">
-        <n-radio-group v-model:value="speed" size="small">
-          <n-radio-button
-            v-for="speed in speeds"
-            :key="speed.value"
-            :value="speed.value"
-            :label="speed.label"
-            :disabled="props.animationOngoing"
-          />
-        </n-radio-group>
+      <n-space justify="space-between">
+        <n-tooltip trigger="hover" :placement="toolTipPlacement">
+          <template #trigger>
+            <n-radio-group v-model:value="speed" size="small">
+              <n-radio-button
+                v-for="speed in speeds"
+                :key="speed.value"
+                :value="speed.value"
+                :label="speed.label"
+                :disabled="props.animationOngoing"
+              />
+            </n-radio-group>
+          </template>
+          Animationsgeschwindigkeit
+        </n-tooltip>
+        <n-switch
+          v-show="selectedMonth && selectedYear && !props.animationOngoing && clickedPlay"
+          :size="'small'"
+          v-model:value="toggleValue"
+          @click="togglePaths"
+        >
+          <template #checked>Pfade angezeigt</template>
+          <template #unchecked>Pfade versteckt</template>
+        </n-switch>
       </n-space>
     </div>
   </n-space>
