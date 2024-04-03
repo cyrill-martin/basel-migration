@@ -98,7 +98,9 @@ function resetMigration() {
 
 // Load the maps //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-const mapAreaHeight = computed(() => screenSize.height * 0.8)
+const mapAreaHeight = computed(() =>
+  screenSize.isMobile ? screenSize.height * 0.6 : screenSize.height * 0.8
+)
 
 const baselMap = ref(null)
 const switzerlandMap = ref(null)
@@ -560,7 +562,7 @@ async function animateMigrants(direction, map, last) {
             .attr("fill", "none")
             .attr("stroke", (d) => migrantColorAccessor(d))
             .attr("stroke-width", "1px")
-            .attr("opacity", (d) => (d.Wanderungstyp === "Wegzug" ? 0.2 : 0.1))
+            .attr("opacity", (d) => (d.Wanderungstyp === "Wegzug" ? 0.1 : 0.05))
             .attr(
               "d",
               (d) =>

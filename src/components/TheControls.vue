@@ -143,7 +143,9 @@ function togglePaths() {
 
 // Handle icon controls
 const iconSize = ref("30")
-const isActiveControl = computed(() => selectedMonth.value && selectedYear.value)
+const isActiveControl = computed(
+  () => selectedMonth.value && selectedYear.value && !invalidSelection.value
+)
 const controlDepth = computed(() => (isActiveControl.value ? 1 : 5))
 
 // Speed slider
@@ -163,57 +165,122 @@ const toolTipPlacement = computed(() => {
 
 <template>
   <n-flex>
-    <!-- <n-space vertical> -->
     <div style="flex: 1">
-      <!-- Speed -->
-      <n-tooltip trigger="hover" :placement="toolTipPlacement">
-        <template #trigger>
-          <n-radio-group v-model:value="speed" size="small">
-            <n-radio-button
-              v-for="speed in speeds"
-              :key="speed.value"
-              :value="speed.value"
-              :label="speed.label"
-              :disabled="props.animationOngoing"
-            />
-          </n-radio-group>
-        </template>
-        Animationsgeschwindigkeit
-      </n-tooltip>
+      <div style="flex: 1">
+        <!-- Date selection -->
+        <n-space justify="center">
+          <!-- Month -->
+          <n-select
+            :disabled="props.animationOngoing"
+            class="date-selection"
+            placeholder="Monat wählen"
+            v-model:value="selectedMonth"
+            :options="months"
+            size="small"
+          />
+          <!-- Year -->
+          <n-select
+            :disabled="props.animationOngoing"
+            class="date-selection"
+            placeholder="Jahr wählen"
+            v-model:value="selectedYear"
+            :options="years"
+            size="small"
+          />
+          <div v-if="invalidSelection">
+            <n-space justify="center"
+              ><span class="date-selection-warning"
+                >Die jüngsten Daten stammen von Oktober 2023!</span
+              ></n-space
+            >
+          </div>
+        </n-space>
+      </div>
+      <div style="flex: 1">
+        <n-space justify="center">
+          <!-- Back -->
+          <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing">
+            <template #trigger>
+              <n-icon
+                :class="{ activeControl: isActiveControl }"
+                :size="iconSize"
+                :depth="controlDepth"
+                :color="'rgb(80, 80, 80)'"
+                :component="ChevronBackCircleOutline"
+                @click="skipDate(-1)"
+              />
+            </template>
+            vorheriger Monat
+          </n-tooltip>
+          <!-- Play -->
+          <n-tooltip
+            trigger="hover"
+            placement="bottom"
+            v-if="!props.animationOngoing && !isLoading"
+          >
+            <template #trigger>
+              <n-icon
+                :class="{ activeControl: isActiveControl }"
+                :size="iconSize"
+                :depth="controlDepth"
+                :component="Play"
+                @click="startAnimation"
+              />
+            </template>
+            Animation starten
+          </n-tooltip>
+          <!-- Spinner -->
+          <n-spin v-if="isLoading" size="small" />
+          <!-- Stop -->
+          <n-tooltip trigger="hover" placement="bottom" v-if="props.animationOngoing">
+            <template #trigger>
+              <n-icon
+                class="activeControl"
+                :size="iconSize"
+                :component="Stop"
+                @click="stopAnimation"
+              />
+            </template>
+            Animation abbrechen
+          </n-tooltip>
+          <!-- Forward -->
+          <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing">
+            <template #trigger>
+              <n-icon
+                :class="{ activeControl: isActiveControl }"
+                :size="iconSize"
+                :depth="controlDepth"
+                :color="'rgb(80, 80, 80)'"
+                :component="ChevronForwardCircleOutline"
+                @click="skipDate(1)"
+              />
+            </template>
+            nächster Monat
+          </n-tooltip>
+        </n-space>
+      </div>
     </div>
     <div style="flex: 1">
-      <!-- Date selection -->
+      <!-- Speed -->
       <n-space justify="center">
-        <!-- Month -->
-        <n-select
-          :disabled="props.animationOngoing"
-          class="date-selection"
-          placeholder="Monat wählen"
-          v-model:value="selectedMonth"
-          :options="months"
-          size="small"
-        />
-        <!-- Year -->
-        <n-select
-          :disabled="props.animationOngoing"
-          class="date-selection"
-          placeholder="Jahr wählen"
-          v-model:value="selectedYear"
-          :options="years"
-          size="small"
-        />
-        <div v-if="invalidSelection">
-        <n-space justify="center"
-          ><span class="date-selection-warning"
-            >Die jüngsten Daten stammen von Oktober 2023!</span
-          ></n-space
-        >
-      </div>
+        <n-tooltip trigger="hover" :placement="toolTipPlacement">
+          <template #trigger>
+            <n-radio-group v-model:value="speed" size="small">
+              <n-radio-button
+                v-for="speed in speeds"
+                :key="speed.value"
+                :value="speed.value"
+                :label="speed.label"
+                :disabled="props.animationOngoing"
+              />
+            </n-radio-group>
+          </template>
+          Animationsgeschwindigkeit
+        </n-tooltip>
       </n-space>
     </div>
     <div style="flex: 1">
       <!-- Paths -->
-      <!-- v-show="selectedMonth && selectedYear && !props.animationOngoing && clickedPlay" -->
       <n-space justify="end">
         <n-switch
           :size="'small'"
@@ -227,68 +294,6 @@ const toolTipPlacement = computed(() => {
       </n-space>
     </div>
   </n-flex>
-  <n-flex>
-    <div style="flex: 1">
-      <n-space justify="center">
-        <!-- Back -->
-        <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing">
-          <template #trigger>
-            <n-icon
-              :class="{ activeControl: isActiveControl }"
-              :size="iconSize"
-              :depth="controlDepth"
-              :color="'rgb(80, 80, 80)'"
-              :component="ChevronBackCircleOutline"
-              @click="skipDate(-1)"
-            />
-          </template>
-          vorheriger Monat
-        </n-tooltip>
-        <!-- Play -->
-        <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing && !isLoading">
-          <template #trigger>
-            <n-icon
-              :class="{ activeControl: isActiveControl }"
-              :size="iconSize"
-              :depth="controlDepth"
-              :component="Play"
-              @click="startAnimation"
-            />
-          </template>
-          Animation starten
-        </n-tooltip>
-        <!-- Spinner -->
-        <n-spin v-if="isLoading" size="small" />
-        <!-- Stop -->
-        <n-tooltip trigger="hover" placement="bottom" v-if="props.animationOngoing">
-          <template #trigger>
-            <n-icon
-              class="activeControl"
-              :size="iconSize"
-              :component="Stop"
-              @click="stopAnimation"
-            />
-          </template>
-          Animation abbrechen
-        </n-tooltip>
-        <!-- Forward -->
-        <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing">
-          <template #trigger>
-            <n-icon
-              :class="{ activeControl: isActiveControl }"
-              :size="iconSize"
-              :depth="controlDepth"
-              :color="'rgb(80, 80, 80)'"
-              :component="ChevronForwardCircleOutline"
-              @click="skipDate(1)"
-            />
-          </template>
-          nächster Monat
-        </n-tooltip>
-      </n-space>
-    </div>
-  </n-flex>
-  <!-- </n-space> -->
 </template>
 
 <style scoped>
