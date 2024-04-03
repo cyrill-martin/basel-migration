@@ -191,7 +191,7 @@ const toolTipPlacement = computed(() => {
           placeholder="Monat wählen"
           v-model:value="selectedMonth"
           :options="months"
-          size="large"
+          size="small"
         />
         <!-- Year -->
         <n-select
@@ -200,28 +200,29 @@ const toolTipPlacement = computed(() => {
           placeholder="Jahr wählen"
           v-model:value="selectedYear"
           :options="years"
-          size="large"
+          size="small"
         />
-      </n-space>
-      <div v-if="invalidSelection">
+        <div v-if="invalidSelection">
         <n-space justify="center"
           ><span class="date-selection-warning"
             >Die jüngsten Daten stammen von Oktober 2023!</span
           ></n-space
         >
       </div>
+      </n-space>
     </div>
     <div style="flex: 1">
       <!-- Paths -->
+      <!-- v-show="selectedMonth && selectedYear && !props.animationOngoing && clickedPlay" -->
       <n-space justify="end">
         <n-switch
-          v-show="selectedMonth && selectedYear && !props.animationOngoing && clickedPlay"
           :size="'small'"
           v-model:value="toggleValue"
           @click="togglePaths"
+          :disabled="props.animationOngoing || !migrationData"
         >
-          <template #checked>Pfade angezeigt</template>
-          <template #unchecked>Pfade versteckt</template>
+          <template #checked>Pfade sichtbar</template>
+          <template #unchecked>Pfade ausgeblendet</template>
         </n-switch>
       </n-space>
     </div>
