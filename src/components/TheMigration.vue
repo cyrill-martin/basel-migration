@@ -821,7 +821,7 @@ function addRegionMouseEvents(map) {
 
     // Show/hide region tooltip
     d3.select("#region-tooltip")
-      .html(regionNameUX)
+      .text(regionNameUX)
       .style("display", event.type === "mouseover" ? "block" : "none")
       .style(
         "left",
@@ -849,13 +849,18 @@ function addMigrantMouseEvents() {
     const originRegionElements = d3.selectAll(`.${migrantData.StartKarte}-${originRegion}`)
 
     const loweredRegionColor = originRegionElements.node().getAttribute("data-fill")
-    const raisedRegionColor = isEmigrant ? migrationColors.raisedEmigrantRegion : migrationColors.raisedImmigrantRegion
+    const raisedRegionColor = isEmigrant
+      ? migrationColors.raisedEmigrantRegion
+      : migrationColors.raisedImmigrantRegion
 
     // Raise origin region
     originRegionElements
       .style("fill", event.type === "mouseover" ? raisedRegionColor : loweredRegionColor)
       .style("stroke", event.type === "mouseover" ? raisedRegionColor : borderStroke)
-      .style("stroke-width", event.type === "mouseover" ? "4px" : migrantData.StartKarte === "world" ? "0.5px" : "1px")
+      .style(
+        "stroke-width",
+        event.type === "mouseover" ? "4px" : migrantData.StartKarte === "world" ? "0.5px" : "1px"
+      )
 
     if (event.type === "mouseover") {
       originRegionElements.raise()
@@ -877,13 +882,69 @@ function addMigrantMouseEvents() {
       .attr("r", event.type === "mouseover" ? migrantRadius * 2 : migrantRadius)
       .attr("opacity", event.type === "mouseover" ? 1 : migrantOpacity)
       .raise()
+
+    // Show/hide migrant tooltip
+    const migrantTooltip = d3.select("#migrant-tooltip")
+
+    migrantTooltip.select("#migrant-type").text(migrantData.Wanderungstyp)
+
+    migrantTooltip
+      .select("#migrant-gender")
+      .text(
+        migrantData.Geschlecht === "W"
+          ? "Frau, "
+          : migrantData.Geschlecht === "NA"
+            ? "Geschlecht unbekannt, "
+            : "Mann, "
+      )
+
+    migrantTooltip
+      .select("#migrant-age")
+      .text(migrantData.Alter === "NA" ? "Alter unbekannt" : `${migrantData.Alter} Jahre`)
+
+    migrantTooltip
+      .select("#migrant-nationality")
+      .text(
+        migrantData.Staatsangehoerigkeit === "NA"
+          ? "Staatsangehörigkeit unbekannt"
+          : migrantData.Staatsangehoerigkeit
+      )
+
+    migrantTooltip
+      .select("#migrant-from")
+      .text(
+        `Von: ${migrantData.StartRegion === "NA" ? "Herkunft unbekannt" : migrantData.StartRegion}`
+      )
+
+    migrantTooltip
+      .select("#migrant-to")
+      .text(`Nach: ${migrantData.EndRegion === "NA" ? "Ziel unbekannt" : migrantData.EndRegion}`)
+
+    migrantTooltip
+      .style("display", event.type === "mouseover" ? "block" : "none")
+      .style(
+        "left",
+        // `${htmlContainerRect.x + (mapTranslation.value[map].x + centroids.value[map][regionNameDOM][0]) + xOffset}px`
+        0
+      )
+      .style(
+        "top",
+        // `${htmlContainerRect.y + (mapTranslation.value[map].y + centroids.value[map][regionNameDOM][1]) + yOffset}px`
+        0
+      )
   })
 }
 </script>
 
 <template>
   <div id="region-tooltip" class="tooltip"></div>
-  <div id="migrant-tooltip" class="tooltip"></div>
+  <div id="migrant-tooltip" class="tooltip">
+    <div id="migrant-type"></div>
+    <div><span id="migrant-gender"></span><span id="migrant-age"></span></div>
+    <div id="migrant-nationality"></div>
+    <div id="migrant-from"></div>
+    <div id="migrant-to"></div>
+  </div>
   <n-flex vertical style="flex: 1">
     <TheControls
       :animation-ongoing="animationOngoing"

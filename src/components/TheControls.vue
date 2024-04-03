@@ -1,6 +1,7 @@
 <script setup>
 import * as d3 from "d3"
 import {
+  NFlex,
   NSpin,
   NSpace,
   NSelect,
@@ -156,13 +157,32 @@ const speeds = ref([
 const toggleValue = ref(false)
 
 const toolTipPlacement = computed(() => {
-  return speed.value === 1 ? "top-start" : speed.value === 3 ? "top" : "top-end"
+  return speed.value === 1 ? "bottom-start" : speed.value === 3 ? "bottom" : "bottom-end"
 })
 </script>
 
 <template>
-  <n-space vertical>
-    <div>
+  <n-flex>
+    <!-- <n-space vertical> -->
+    <div style="flex: 1">
+      <!-- Speed -->
+      <n-tooltip trigger="hover" :placement="toolTipPlacement">
+        <template #trigger>
+          <n-radio-group v-model:value="speed" size="small">
+            <n-radio-button
+              v-for="speed in speeds"
+              :key="speed.value"
+              :value="speed.value"
+              :label="speed.label"
+              :disabled="props.animationOngoing"
+            />
+          </n-radio-group>
+        </template>
+        Animationsgeschwindigkeit
+      </n-tooltip>
+    </div>
+    <div style="flex: 1">
+      <!-- Date selection -->
       <n-space justify="center">
         <!-- Month -->
         <n-select
@@ -183,72 +203,17 @@ const toolTipPlacement = computed(() => {
           size="large"
         />
       </n-space>
-    </div>
-    <div v-if="invalidSelection">
-      <n-space justify="center"
-        ><span class="date-selection-warning"
-          >Die jüngsten Daten stammen von Oktober 2023!</span
-        ></n-space
-      >
-    </div>
-    <div>
-      <n-space justify="center">
-        <!-- Back -->
-        <span v-show="!props.animationOngoing" :class="{ activeControl: isActiveControl }">
-          <n-icon
-            :size="iconSize"
-            :depth="controlDepth"
-            :color="'rgb(80, 80, 80)'"
-            :component="ChevronBackCircleOutline"
-            @click="skipDate(-1)"
-          />
-        </span>
-        <!-- Play -->
-        <span
-          v-if="!props.animationOngoing && !isLoading"
-          :class="{ activeControl: isActiveControl }"
+      <div v-if="invalidSelection">
+        <n-space justify="center"
+          ><span class="date-selection-warning"
+            >Die jüngsten Daten stammen von Oktober 2023!</span
+          ></n-space
         >
-          <n-icon
-            :size="iconSize"
-            :depth="controlDepth"
-            :component="Play"
-            @click="startAnimation"
-          />
-        </span>
-        <!-- Spinner -->
-        <n-spin v-if="isLoading" size="small" />
-        <!-- Stop -->
-        <span v-if="props.animationOngoing">
-          <n-icon class="activeControl" :size="iconSize" :component="Stop" @click="stopAnimation" />
-        </span>
-        <!-- Forward -->
-        <span v-show="!props.animationOngoing" :class="{ activeControl: isActiveControl }">
-          <n-icon
-            :size="iconSize"
-            :depth="controlDepth"
-            :color="'rgb(80, 80, 80)'"
-            :component="ChevronForwardCircleOutline"
-            @click="skipDate(1)"
-          />
-        </span>
-      </n-space>
+      </div>
     </div>
-    <div>
-      <n-space justify="space-between">
-        <n-tooltip trigger="hover" :placement="toolTipPlacement">
-          <template #trigger>
-            <n-radio-group v-model:value="speed" size="small">
-              <n-radio-button
-                v-for="speed in speeds"
-                :key="speed.value"
-                :value="speed.value"
-                :label="speed.label"
-                :disabled="props.animationOngoing"
-              />
-            </n-radio-group>
-          </template>
-          Animationsgeschwindigkeit
-        </n-tooltip>
+    <div style="flex: 1">
+      <!-- Paths -->
+      <n-space justify="end">
         <n-switch
           v-show="selectedMonth && selectedYear && !props.animationOngoing && clickedPlay"
           :size="'small'"
@@ -260,7 +225,69 @@ const toolTipPlacement = computed(() => {
         </n-switch>
       </n-space>
     </div>
-  </n-space>
+  </n-flex>
+  <n-flex>
+    <div style="flex: 1">
+      <n-space justify="center">
+        <!-- Back -->
+        <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing">
+          <template #trigger>
+            <n-icon
+              :class="{ activeControl: isActiveControl }"
+              :size="iconSize"
+              :depth="controlDepth"
+              :color="'rgb(80, 80, 80)'"
+              :component="ChevronBackCircleOutline"
+              @click="skipDate(-1)"
+            />
+          </template>
+          vorheriger Monat
+        </n-tooltip>
+        <!-- Play -->
+        <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing && !isLoading">
+          <template #trigger>
+            <n-icon
+              :class="{ activeControl: isActiveControl }"
+              :size="iconSize"
+              :depth="controlDepth"
+              :component="Play"
+              @click="startAnimation"
+            />
+          </template>
+          Animation starten
+        </n-tooltip>
+        <!-- Spinner -->
+        <n-spin v-if="isLoading" size="small" />
+        <!-- Stop -->
+        <n-tooltip trigger="hover" placement="bottom" v-if="props.animationOngoing">
+          <template #trigger>
+            <n-icon
+              class="activeControl"
+              :size="iconSize"
+              :component="Stop"
+              @click="stopAnimation"
+            />
+          </template>
+          Animation abbrechen
+        </n-tooltip>
+        <!-- Forward -->
+        <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing">
+          <template #trigger>
+            <n-icon
+              :class="{ activeControl: isActiveControl }"
+              :size="iconSize"
+              :depth="controlDepth"
+              :color="'rgb(80, 80, 80)'"
+              :component="ChevronForwardCircleOutline"
+              @click="skipDate(1)"
+            />
+          </template>
+          nächster Monat
+        </n-tooltip>
+      </n-space>
+    </div>
+  </n-flex>
+  <!-- </n-space> -->
 </template>
 
 <style scoped>
