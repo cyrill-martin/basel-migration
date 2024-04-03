@@ -149,9 +149,9 @@ const controlDepth = computed(() => (isActiveControl.value ? 1 : 5))
 // Speed slider
 const speed = ref(3)
 const speeds = ref([
-  { value: 1, label: "langsam" },
-  { value: 3, label: "mittel" },
-  { value: 5, label: "schnell" }
+  { value: 1, label: "langsamer" },
+  { value: 3, label: "normal" },
+  { value: 5, label: "schneller" }
 ])
 
 const toggleValue = ref(false)

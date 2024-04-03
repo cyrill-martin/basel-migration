@@ -777,11 +777,17 @@ function getRegionNameUX(regionData, selector) {
   return regionData["properties"][selector]
 }
 
+function getHtmlContainerRect() {
+  const htmlContainer = document.getElementById("basel-migration")
+  return htmlContainer.getBoundingClientRect()
+}
+
+const htmlContainerRect = computed(() => {
+  return getHtmlContainerRect()
+})
+
 function addRegionMouseEvents(map) {
   const regionSelection = d3.selectAll(`.${map}-region`)
-
-  const htmlContainer = document.getElementById("basel-migration")
-  const htmlContainerRect = htmlContainer.getBoundingClientRect()
 
   regionSelection.on("mouseover mouseout", function (event) {
     const regionData = d3.select(this).datum()
@@ -825,11 +831,11 @@ function addRegionMouseEvents(map) {
       .style("display", event.type === "mouseover" ? "block" : "none")
       .style(
         "left",
-        `${htmlContainerRect.x + (mapTranslation.value[map].x + centroids.value[map][regionNameDOM][0]) + xOffset}px`
+        `${htmlContainerRect.value.x + (mapTranslation.value[map].x + centroids.value[map][regionNameDOM][0]) + xOffset}px`
       )
       .style(
         "top",
-        `${htmlContainerRect.y + (mapTranslation.value[map].y + centroids.value[map][regionNameDOM][1]) + yOffset}px`
+        `${htmlContainerRect.value.y + (mapTranslation.value[map].y + centroids.value[map][regionNameDOM][1]) + yOffset}px`
       )
   })
 }
@@ -846,26 +852,31 @@ function addMigrantMouseEvents() {
     let originRegion = isEmigrant ? migrantData.VonWohnviertel : migrantData.StartRegion
     originRegion = stripMapName(originRegion)
 
-    const originRegionElements = d3.selectAll(`.${migrantData.StartKarte}-${originRegion}`)
+    const startRegionElement =
+      originRegion !== "NA" ? d3.selectAll(`.${migrantData.StartKarte}-${originRegion}`) : false
 
-    const loweredRegionColor = originRegionElements.node().getAttribute("data-fill")
+    const loweredRegionColor = startRegionElement
+      ? startRegionElement.node().getAttribute("data-fill")
+      : false
     const raisedRegionColor = isEmigrant
       ? migrationColors.raisedEmigrantRegion
       : migrationColors.raisedImmigrantRegion
 
-    // Raise origin region
-    originRegionElements
-      .style("fill", event.type === "mouseover" ? raisedRegionColor : loweredRegionColor)
-      .style("stroke", event.type === "mouseover" ? raisedRegionColor : borderStroke)
-      .style(
-        "stroke-width",
-        event.type === "mouseover" ? "4px" : migrantData.StartKarte === "world" ? "0.5px" : "1px"
-      )
+    // Raise/lower origin region
+    if (startRegionElement) {
+      startRegionElement
+        .style("fill", event.type === "mouseover" ? raisedRegionColor : loweredRegionColor)
+        .style("stroke", event.type === "mouseover" ? raisedRegionColor : borderStroke)
+        .style(
+          "stroke-width",
+          event.type === "mouseover" ? "4px" : migrantData.StartKarte === "world" ? "0.5px" : "1px"
+        )
 
-    if (event.type === "mouseover") {
-      originRegionElements.raise()
-    } else {
-      originRegionElements.order()
+      if (event.type === "mouseover") {
+        startRegionElement.raise()
+      } else {
+        startRegionElement.order()
+      }
     }
 
     // Raise migrant
@@ -886,52 +897,79 @@ function addMigrantMouseEvents() {
     // Show/hide migrant tooltip
     const migrantTooltip = d3.select("#migrant-tooltip")
 
-    migrantTooltip.select("#migrant-type").text(migrantData.Wanderungstyp)
+    const startNameSelectorUX =
+      migrantData.StartRegion !== "NA" ? getGeoJsonNameSelectorUX(migrantData.StartKarte) : false
 
-    migrantTooltip
-      .select("#migrant-gender")
-      .text(
-        migrantData.Geschlecht === "W"
-          ? "Frau, "
-          : migrantData.Geschlecht === "NA"
-            ? "Geschlecht unbekannt, "
-            : "Mann, "
-      )
+    const startRegionNameUX = startNameSelectorUX
+      ? getRegionNameUX(startRegionElement.datum(), startNameSelectorUX)
+      : migrantData.StartRegion
 
-    migrantTooltip
-      .select("#migrant-age")
-      .text(migrantData.Alter === "NA" ? "Alter unbekannt" : `${migrantData.Alter} Jahre`)
+    const endNameSelectorUX =
+      migrantData.EndKarte !== "NA" ? getGeoJsonNameSelectorUX(migrantData.EndKarte) : false
 
-    migrantTooltip
-      .select("#migrant-nationality")
-      .text(
-        migrantData.Staatsangehoerigkeit === "NA"
+    const endRegionData =
+      migrantData.EndRegion !== "NA"
+        ? d3.selectAll(`.${migrantData.EndKarte}-${migrantData.EndRegion}`).datum()
+        : false
+
+    const endRegionNameUX = endRegionData
+      ? getRegionNameUX(endRegionData, endNameSelectorUX)
+      : migrantData.EndRegion
+
+    const migrantGender =
+      migrantData.Geschlecht === "NA"
+        ? "Geschlecht unbekannt"
+        : migrantData.Geschlecht === "W"
+          ? "Frau"
+          : "Mann"
+
+    const migrantType =
+      migrantData.Geschlecht === "NA"
+        ? migrantData.Wanderungstyp === "Zuzug"
+          ? "Zuzüger:in"
+          : "Wegzüger:in"
+        : migrantData.Geschlecht === "W"
+          ? migrantData.Wanderungstyp === "Zuzug"
+            ? "Zuzügerin"
+            : "Wegzügerin"
+          : migrantData.Wanderungstyp === "Zuzug"
+            ? "Zuzüger"
+            : "Wegzüger"
+
+    const migrantAge =
+      migrantData.Alter === "NA"
+        ? "Alter unbekannt"
+        : migrantData.Alter === "1"
+          ? `${migrantData.Alter} Jahr alt`
+          : `${migrantData.Alter} Jahre alt`
+
+    const migrantNationality =
+      migrantData.Geschlecht === "NA"
+        ? migrantData.Staatsangehoerigkeit === "NA"
           ? "Staatsangehörigkeit unbekannt"
+          : migrantData.Staatsangehoerigkeit === "Schweizer"
+            ? "Schweizer:in"
+            : "Ausländer:in"
+        : migrantData.Geschlecht === "W"
+          ? migrantData.Staatsangehoerigkeit === "Schweizer"
+            ? "Schweizerin"
+            : "Ausländerin"
           : migrantData.Staatsangehoerigkeit
-      )
 
-    migrantTooltip
-      .select("#migrant-from")
-      .text(
-        `Von: ${migrantData.StartRegion === "NA" ? "Herkunft unbekannt" : migrantData.StartRegion}`
-      )
+    const migrantFrom = migrantData.StartRegion === "NA" ? "Herkunft unbekannt" : startRegionNameUX
+    const migrantTo = migrantData.EndRegion === "NA" ? "Ziel unbekannt" : endRegionNameUX
 
-    migrantTooltip
-      .select("#migrant-to")
-      .text(`Nach: ${migrantData.EndRegion === "NA" ? "Ziel unbekannt" : migrantData.EndRegion}`)
+    migrantTooltip.select("#migrant-type").text(migrantType).style("font-weight", "bold")
+    migrantTooltip.select("#migrant-gender").text(`${migrantGender}, `)
+    migrantTooltip.select("#migrant-age").text(migrantAge)
+    migrantTooltip.select("#migrant-nationality").text(migrantNationality)
+    migrantTooltip.select("#migrant-from").text(`Von: ${migrantFrom}`)
+    migrantTooltip.select("#migrant-to").text(`Nach: ${migrantTo}`)
 
     migrantTooltip
       .style("display", event.type === "mouseover" ? "block" : "none")
-      .style(
-        "left",
-        // `${htmlContainerRect.x + (mapTranslation.value[map].x + centroids.value[map][regionNameDOM][0]) + xOffset}px`
-        0
-      )
-      .style(
-        "top",
-        // `${htmlContainerRect.y + (mapTranslation.value[map].y + centroids.value[map][regionNameDOM][1]) + yOffset}px`
-        0
-      )
+      .style("left", `${migrant.attr("cx")}px`)
+      .style("top", `${parseInt(migrant.attr("cy")) + 50}px`)
   })
 }
 </script>
