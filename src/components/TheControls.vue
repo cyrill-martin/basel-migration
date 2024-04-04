@@ -20,6 +20,7 @@ import {
   Stop,
   ChevronForwardCircleOutline
 } from "@vicons/ionicons5"
+import TheExport from "./TheExport.vue"
 
 const maxYear = 2023
 const maxMonth = 10
@@ -175,6 +176,7 @@ const toolTipPlacement = computed(() => {
         <n-space justify="center">
           <!-- Month -->
           <n-select
+            id="month-selection"
             :disabled="props.animationOngoing"
             class="date-selection"
             placeholder="Monat wählen"
@@ -184,6 +186,7 @@ const toolTipPlacement = computed(() => {
           />
           <!-- Year -->
           <n-select
+            id="year-selection"
             :disabled="props.animationOngoing"
             class="date-selection"
             placeholder="Jahr wählen"
@@ -284,18 +287,23 @@ const toolTipPlacement = computed(() => {
       </n-space>
     </div>
     <div style="flex: 1">
-      <!-- Paths -->
-      <n-space justify="end">
-        <n-switch
-          :size="'small'"
-          v-model:value="toggleValue"
-          @click="togglePaths"
-          :disabled="props.animationOngoing || !migrationData || animationStopped"
-        >
-          <template #checked>Pfade sichtbar</template>
-          <template #unchecked>Pfade ausgeblendet</template>
-        </n-switch>
-      </n-space>
+      <div style="flex: 1">
+        <!-- Paths -->
+        <n-space justify="end">
+          <n-switch
+            :size="'small'"
+            v-model:value="toggleValue"
+            @click="togglePaths"
+            :disabled="props.animationOngoing || !migrationData || animationStopped"
+          >
+            <template #checked>Pfade sichtbar</template>
+            <template #unchecked>Pfade ausgeblendet</template>
+          </n-switch>
+        </n-space>
+      </div>
+      <div style="flex: 1; margin-top: 0.5rem">
+        <TheExport :year="selectedYear" :month="selectedMonth"/>
+      </div>
     </div>
   </n-flex>
 </template>
