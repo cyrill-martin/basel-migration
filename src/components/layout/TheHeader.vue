@@ -1,15 +1,28 @@
 <script setup>
 import { NFlex } from "naive-ui"
+import { useRouter, useRoute } from "vue-router"
+
+// Use the router
+const router = useRouter()
+const route = useRoute()
+
+function goHome() {
+  if (route.name === "about") {
+    router.push({
+      name: "home"
+    })
+  }
+}
 </script>
 
 <template>
   <header>
     <n-flex>
-      <div class="title-container">
+      <div class="title-container" @click="goHome">
         <span class="h1">Basel-Stadt: Zu- und Wegzüge</span><br />
         <span class="h2">Januar 2006 bis Oktober 2023</span>
       </div>
-      <div class="nav-container">
+      <div class="nav-container" v-show="route.name === 'home'">
         <nav>
           <RouterLink to="/about">Über</RouterLink>
         </nav>
@@ -31,6 +44,7 @@ header {
 }
 .title-container {
   flex: 4;
+  cursor: pointer;
 }
 .nav-container {
   display: flex;

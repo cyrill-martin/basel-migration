@@ -10,7 +10,7 @@
 <style scoped>
 footer {
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 12px;
   padding: 1rem;
   margin-top: 2rem;
 }

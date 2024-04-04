@@ -1,20 +1,20 @@
 ## Map of Basel (./public/data/maps/basel.geojson)
 Original file 100042.geojson from Canton of Basel-Stadt, derived from:
-https://opendata.swiss/de/dataset/statistische-raumeinheiten-wohnviertel/resource/e7ea6c0f-402d-4f3f-a818-a3f417b3c012
+https://data.bs.ch/api/v2/catalog/datasets/100042/exports/geojson
 
 ## Map of Switzerland (./public/data/maps/switzerland.geojson)
 Original file swissBOUNDARIES3D_1_3_TLM_KANTONSGEBIET.geojson from swisstope, derived from:
-https://www.swisstopo.admin.ch/de/landschaftsmodell-swissboundaries3d.
+https://www.swisstopo.admin.ch/de/landschaftsmodell-swissboundaries3d
 
 ## Map of Europe (./public/data/maps/europe.geojson)
-Customized file derived from: https://geojson-maps.kyd.au/.
+Customized file derived from: https://geojson-maps.kyd.au/
 
 ## Map of the world (./public/data/maps/world.geojson)
-Customized file derived from: https://geojson-maps.kyd.au/.
+Customized file derived from: https://geojson-maps.kyd.au/
 
 ## Migration Data
 Original data from Canton of Basel-Stadt, derived from:
-https://data.bs.ch/explore/dataset/100138/table/.
+https://data.bs.ch/explore/dataset/100138/table/
 
 Further data transformations are documented here:
 https://github.com/cyrill-martin/basel-migration-data/blob/main/migration.ipynb
