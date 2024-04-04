@@ -1,5 +1,22 @@
-# D3.js
+# Map of Basel (./public/data/maps/basel.geojson)
+Original file 100042.geojson from Canton of Basel-Stadt, derived from: https://opendata.swiss/de/dataset/statistische-raumeinheiten-wohnviertel/resource/e7ea6c0f-402d-4f3f-a818-a3f417b3c012
 
+
+# Map of Switzerland (./public/data/maps/switzerland.geojson)
+Original file swissBOUNDARIES3D_1_3_TLM_KANTONSGEBIET.geojson from swisstope, derived from: https://www.swisstopo.admin.ch/de/landschaftsmodell-swissboundaries3d.
+
+# Map of Europe (./public/data/maps/europe.geojson)
+Customized file derived from https://geojson-maps.kyd.au/.
+
+# Map of the world (./public/data/maps/world.geojson)
+Customized file derived from https://geojson-maps.kyd.au/.
+
+# Migration Data
+Original data from Canton of Basel-Stadt, derived from https://data.bs.ch/explore/dataset/100138/table/.
+
+Further data transformations are documented here: https://github.com/cyrill-martin/basel-migration-data/blob/main/migration.ipynb
+
+# D3.js
 Copyright 2010-2023 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
@@ -15,7 +32,6 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
 # Vue
-
 The MIT License (MIT)
 
 Copyright (c) 2013-present, Yuxi (Evan) You
@@ -39,7 +55,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 # Vue Router
-
 MIT License
 
 Copyright (c) 2013-present Evan You
@@ -63,7 +78,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 # Pinia
-
 The MIT License (MIT)
 
 Copyright (c) 2019-present Eduardo San Martin Morote
@@ -87,7 +101,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 # vfonts/FiraCode
-
 Copyright (c) 2014, The Fira Code Project Authors (https://github.com/tonsky/FiraCode)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
@@ -183,7 +196,47 @@ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
 # vicons/ionicons5
+The MIT License (MIT)
 
+Copyright (c) 2015-present Ionic (http://ionic.io/)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
 
 # gh-pages
+MIT License
 
+Copyright (c) 2014 Tim Schaub
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -806,7 +806,7 @@ function addRegionMouseEvents(map) {
     let yOffset = map === "basel" || map === "europe" ? -16 : -32
 
     // Offset to place the tooltips top right of the centroids
-    yOffset = -60
+    yOffset = yOffset - 60
 
     // Raise emigrants or immigrants when hovering regions
     if (migration.value && !animationOngoing.value) {
@@ -960,17 +960,38 @@ function addMigrantMouseEvents() {
     const migrantFrom = migrantData.StartRegion === "NA" ? "Herkunft unbekannt" : startRegionNameUX
     const migrantTo = migrantData.EndRegion === "NA" ? "Ziel unbekannt" : endRegionNameUX
 
-    migrantTooltip.select("#migrant-type").text(migrantType).style("font-weight", "bold")
+    migrantTooltip
+      .select("#migrant-type")
+      .text(migrantType)
+      .style("font-weight", "bold")
+      .style("text-decoration", "underline")
     migrantTooltip.select("#migrant-gender").text(`${migrantGender}, `)
     migrantTooltip.select("#migrant-age").text(migrantAge)
     migrantTooltip.select("#migrant-nationality").text(migrantNationality)
     migrantTooltip.select("#migrant-from").text(`Von: ${migrantFrom}`)
     migrantTooltip.select("#migrant-to").text(`Nach: ${migrantTo}`)
 
+    // Offsets for the tooltips
+    const xOffset = isEmigrant
+      ? migrantData.EndKarte === "basel" || migrantData.EndKarte === "switzerland"
+        ? -16
+        : -32
+      : migrantData.StartKarte === "basel" || migrantData.StartKarte === "switzerland"
+        ? -16
+        : -32
+
+    const yOffset = isEmigrant
+      ? migrantData.EndKarte === "basel" || migrantData.EndKarte === "europe"
+        ? -16
+        : -32
+      : migrantData.StartKarte === "basel" || migrantData.StartKarte === "europe"
+        ? -16
+        : -32
+
     migrantTooltip
       .style("display", event.type === "mouseover" ? "block" : "none")
-      .style("left", `${migrant.attr("cx")}px`)
-      .style("top", `${parseInt(migrant.attr("cy")) + 50}px`)
+      .style("left", `${parseInt(migrant.attr("cx")) + xOffset}px`)
+      .style("top", `${parseInt(migrant.attr("cy")) + yOffset + 50}px`)
   })
 }
 </script>
