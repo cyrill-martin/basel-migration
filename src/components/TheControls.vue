@@ -1,5 +1,5 @@
 <script setup>
-import * as d3 from "d3"
+import d3 from "../d3-importer.js"
 import {
   NFlex,
   NSpin,
@@ -120,6 +120,7 @@ const clickedPlay = ref(false)
 
 async function startAnimation() {
   clickedPlay.value = true
+  animationStopped.value = false
   toggleValue.value = false
 
   await triggerDataLoading()
@@ -133,8 +134,11 @@ async function startAnimation() {
   }
 }
 
+const animationStopped = ref(false)
+
 function stopAnimation() {
   emit("stopAnimation")
+  animationStopped.value = true
 }
 
 function togglePaths() {
@@ -286,7 +290,7 @@ const toolTipPlacement = computed(() => {
           :size="'small'"
           v-model:value="toggleValue"
           @click="togglePaths"
-          :disabled="props.animationOngoing || !migrationData"
+          :disabled="props.animationOngoing || !migrationData || animationStopped"
         >
           <template #checked>Pfade sichtbar</template>
           <template #unchecked>Pfade ausgeblendet</template>

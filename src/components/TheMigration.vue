@@ -1,5 +1,5 @@
 <script setup>
-import * as d3 from "d3"
+import d3 from "../d3-importer.js"
 import { NFlex, NSpin } from "naive-ui"
 import { onMounted, ref, computed, watch } from "vue"
 import { debounce } from "../utils/debounce.js"
@@ -88,9 +88,8 @@ function resetMigration() {
       .transition()
       .duration(animationDurations.resetMigration)
       .style("fill", function () {
-        const currentFill = d3.color(d3.select(this).style("fill")).formatRgb()
-        const myOmittedRegionFill = d3.color(omittedRegionFill).formatRgb()
-        return currentFill !== myOmittedRegionFill ? regionFill : omittedRegionFill
+        const currentFill = d3.select(this).style("fill")
+        return currentFill !== omittedRegionFill ? regionFill : omittedRegionFill
       })
       .on("end", resolve)
   })

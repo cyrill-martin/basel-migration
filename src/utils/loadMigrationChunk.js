@@ -1,4 +1,4 @@
-import * as d3 from "d3"
+import d3 from "../d3-importer.js"
 import { stripMapName } from "./stripMapName.js"
 
 export async function loadMigrationChunk(chunk) {
