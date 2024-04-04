@@ -1,25 +1,25 @@
-# Map of Basel (./public/data/maps/basel.geojson)
+## Map of Basel (./public/data/maps/basel.geojson)
 Original file 100042.geojson from Canton of Basel-Stadt, derived from:
 https://opendata.swiss/de/dataset/statistische-raumeinheiten-wohnviertel/resource/e7ea6c0f-402d-4f3f-a818-a3f417b3c012
 
-# Map of Switzerland (./public/data/maps/switzerland.geojson)
+## Map of Switzerland (./public/data/maps/switzerland.geojson)
 Original file swissBOUNDARIES3D_1_3_TLM_KANTONSGEBIET.geojson from swisstope, derived from:
 https://www.swisstopo.admin.ch/de/landschaftsmodell-swissboundaries3d.
 
-# Map of Europe (./public/data/maps/europe.geojson)
-Customized file derived from https://geojson-maps.kyd.au/.
+## Map of Europe (./public/data/maps/europe.geojson)
+Customized file derived from: https://geojson-maps.kyd.au/.
 
-# Map of the world (./public/data/maps/world.geojson)
-Customized file derived from https://geojson-maps.kyd.au/.
+## Map of the world (./public/data/maps/world.geojson)
+Customized file derived from: https://geojson-maps.kyd.au/.
 
-# Migration Data
+## Migration Data
 Original data from Canton of Basel-Stadt, derived from:
 https://data.bs.ch/explore/dataset/100138/table/.
 
 Further data transformations are documented here:
 https://github.com/cyrill-martin/basel-migration-data/blob/main/migration.ipynb
 
-# D3.js
+## D3.js
 Copyright 2010-2023 Mike Bostock
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
@@ -34,7 +34,7 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 
-# Vue
+## Vue
 The MIT License (MIT)
 
 Copyright (c) 2013-present, Yuxi (Evan) You
@@ -57,7 +57,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-# Vue Router
+## Vue Router
 MIT License
 
 Copyright (c) 2013-present Evan You
@@ -80,7 +80,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-# Pinia
+## Pinia
 The MIT License (MIT)
 
 Copyright (c) 2019-present Eduardo San Martin Morote
@@ -103,7 +103,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-# vfonts/FiraCode
+## vfonts/FiraCode
 Copyright (c) 2014, The Fira Code Project Authors (https://github.com/tonsky/FiraCode)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
@@ -198,7 +198,7 @@ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 
-# vicons/ionicons5
+## vicons/ionicons5
 The MIT License (MIT)
 
 Copyright (c) 2015-present Ionic (http://ionic.io/)
@@ -221,7 +221,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-# gh-pages
+## gh-pages
 MIT License
 
 Copyright (c) 2014 Tim Schaub

@@ -1,11 +1,11 @@
 # migration-bs.kmapper.com
 
-This is the repository of the visualization(s) shown on migration-bs.kmapper.com.
+This is the repository of the visualization(s) shown on https://migration-bs.kmapper.com.
 
 The website uses migration data from the Canton of Basel-Stadt, derived from https://data.bs.ch/explore/dataset/100138/table/, to visualize migration from and to Basel.
-It allows to select a month and year and animates the Basel migrations from and to different parts of the world (i. e. Switzerland, Europe, rest of the world).
+It allows to select a month and year and animates the Basel migrations from and to different parts of the world, i. e. Switzerland, Europe, rest of the world.
 
-The underlying data transformations applied beforhand are documented in a separate repository here: https://github.com/cyrill-martin/basel-migration-data/blob/main/migration.ipynb.
+The underlying data transformations applied beforhand are documented in a separate repository here: https://github.com/cyrill-martin/basel-migration-data.
 
 ## Project Setup
 
