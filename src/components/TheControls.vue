@@ -200,7 +200,7 @@ const toolTipPlacement = computed(() => {
           </div>
         </n-space>
       </div>
-      <div style="flex: 1">
+      <div style="flex: 1; margin-top: 0.5rem">
         <n-space justify="center">
           <!-- Back -->
           <n-tooltip trigger="hover" placement="bottom" v-if="!props.animationOngoing">
