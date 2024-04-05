@@ -670,22 +670,22 @@ function createLegend() {
     .attr("x", 0)
     .attr("y", 0)
     .text(`${selectedDate.value}`)
-    .attr("font-size", legendFontSize)
-    .attr("font-weight", "bold")
+    .style("font-size", legendFontSize)
+    .style("font-weight", "bold")
 
   legendTitleGroup
     .append("text")
     .attr("x", 0)
     .attr("y", spacingVertical)
     .text("Zu- und Wegzüge")
-    .attr("font-size", legendFontSize)
+    .style("font-size", legendFontSize)
 
   legendTitleGroup
     .append("text")
     .attr("x", 0)
     .attr("y", spacingVertical * 2)
     .text("Basel-Stadt")
-    .attr("font-size", legendFontSize)
+    .style("font-size", legendFontSize)
 
   const legendItemsGroup = legendContainer
     .append("g")
@@ -715,7 +715,7 @@ function createLegend() {
     .attr("x", migrantRadius * 8)
     .attr("y", 0)
     .text((d) => d.label)
-    .attr("font-size", legendFontSize)
+    .style("font-size", legendFontSize)
     .attr("dominant-baseline", "middle")
 
   const legendRectItemsGroup = legendItemsGroup
@@ -743,7 +743,7 @@ function createLegend() {
     .attr("x", migrantRadius * 8)
     .attr("y", 0)
     .text((d) => d.label)
-    .attr("font-size", legendFontSize)
+    .style("font-size", legendFontSize)
     .attr("dominant-baseline", "middle")
 
   const legendTranslationX =
