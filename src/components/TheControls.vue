@@ -197,7 +197,7 @@ const toolTipPlacement = computed(() => {
           <div v-if="invalidSelection">
             <n-space justify="center"
               ><span class="date-selection-warning"
-                >Die jüngsten Daten stammen von Oktober 2023!</span
+                >Daten sind nur bis Oktober 2023 vorhanden!</span
               ></n-space
             >
           </div>
@@ -291,7 +291,7 @@ const toolTipPlacement = computed(() => {
         <!-- Paths -->
         <n-space justify="end">
           <n-switch
-            :size="'small'"
+            size="small"
             v-model:value="toggleValue"
             @click="togglePaths"
             :disabled="props.animationOngoing || !migrationData || animationStopped"
@@ -302,7 +302,11 @@ const toolTipPlacement = computed(() => {
         </n-space>
       </div>
       <div style="flex: 1; margin-top: 0.5rem">
-        <TheExport :year="selectedYear" :month="selectedMonth"/>
+        <TheExport
+          :year="selectedYear"
+          :month="selectedMonth"
+          :animation-ongoing="props.animationOngoing"
+        />
       </div>
     </div>
   </n-flex>
