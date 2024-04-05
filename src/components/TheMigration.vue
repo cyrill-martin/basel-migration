@@ -57,6 +57,7 @@ const debouncedRecreate = debounce(() => {
   recreateMigrationViz()
 }, 200)
 
+
 async function recreateMigrationViz() {
   d3.select("#svg-chart").remove()
   await initiateSvg()

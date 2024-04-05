@@ -6,7 +6,7 @@ const props = defineProps(["year", "month", "animationOngoing"])
 
 function exportImage() {
   const svgElement = document.getElementById("svg-chart")
-  const filename = `basel-migration_${props.year}-${props.month}`
+  const filename = props.year && props.month ? `basel-migration_${props.year}-${props.month}` : "basel-migration"
   saveSvgAsPng(svgElement, filename, { backgroundColor: "white" })
 }
 
