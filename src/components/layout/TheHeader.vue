@@ -21,7 +21,7 @@ function goHome() {
       <div style="flex: 2">
         <div class="title-container">
           <span class="h1" @click="goHome">Basel-Stadt: Zu- und Wegzüge</span><br />
-          <span class="h2" @click="goHome">Januar 2006 bis Oktober 2023</span>
+          <span class="h2" @click="goHome">Januar 2006 bis November 2023</span>
         </div>
       </div>
       <div style="flex: 1">
