@@ -197,7 +197,7 @@ const toolTipPlacement = computed(() => {
           <div v-if="invalidSelection">
             <n-space justify="center"
               ><span class="date-selection-warning"
-                >Daten sind nur bis November 2023 vorhanden!</span
+                >Daten sind nur bis Dezember 2023 vorhanden!</span
               ></n-space
             >
           </div>
