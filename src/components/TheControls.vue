@@ -22,8 +22,8 @@ import {
 } from "@vicons/ionicons5"
 import TheExport from "./TheExport.vue"
 
-const maxYear = 2023
-const maxMonth = 12
+const maxYear = 2024
+const maxMonth = 3
 
 const selectedYear = ref(null)
 const selectedMonth = ref(null)
@@ -50,7 +50,8 @@ const years = [
   { label: "2020", value: 2020 },
   { label: "2021", value: 2021 },
   { label: "2022", value: 2022 },
-  { label: "2023", value: 2023 }
+  { label: "2023", value: 2023 },
+  { label: "2024", value: 2024 }
 ].reverse()
 
 const months = [
