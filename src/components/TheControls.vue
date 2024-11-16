@@ -23,7 +23,7 @@ import {
 import TheExport from "./TheExport.vue"
 
 const maxYear = 2024
-const maxMonth = 3
+const maxMonth = 6
 
 const selectedYear = ref(null)
 const selectedMonth = ref(null)
@@ -198,7 +198,7 @@ const toolTipPlacement = computed(() => {
           <div v-if="invalidSelection">
             <n-space justify="center"
               ><span class="date-selection-warning"
-                >Daten sind nur bis Dezember 2023 vorhanden!</span
+                >Daten sind nur bis Juni 2024 vorhanden!</span
               ></n-space
             >
           </div>
