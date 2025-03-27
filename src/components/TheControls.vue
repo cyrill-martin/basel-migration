@@ -23,7 +23,7 @@ import {
 import TheExport from "./TheExport.vue"
 
 const maxYear = 2024
-const maxMonth = 6
+const maxMonth = 10
 
 const selectedYear = ref(null)
 const selectedMonth = ref(null)
