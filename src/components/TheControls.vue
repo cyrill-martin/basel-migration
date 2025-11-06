@@ -22,8 +22,8 @@ import {
 } from "@vicons/ionicons5"
 import TheExport from "./TheExport.vue"
 
-const maxYear = 2024
-const maxMonth = 10
+const maxYear = 2025
+const maxMonth = 6
 
 const selectedYear = ref(null)
 const selectedMonth = ref(null)
@@ -51,7 +51,8 @@ const years = [
   { label: "2021", value: 2021 },
   { label: "2022", value: 2022 },
   { label: "2023", value: 2023 },
-  { label: "2024", value: 2024 }
+  { label: "2024", value: 2024 },
+  { label: "2025", value: 2025 }
 ].reverse()
 
 const months = [
@@ -198,7 +199,7 @@ const toolTipPlacement = computed(() => {
           <div v-if="invalidSelection">
             <n-space justify="center"
               ><span class="date-selection-warning"
-                >Daten sind nur bis Juni 2024 vorhanden!</span
+                >Daten sind nur bis Juni 2025 vorhanden!</span
               ></n-space
             >
           </div>
